@@ -1,6 +1,6 @@
-#include "include/turtle.h"
-#include "include/ribbon.h"
-#include "include/zenityFileDialog.h"
+#include "../include/turtle.h"
+#include "../include/ribbon.h"
+#include "../include/zenityFileDialog.h"
 #include <time.h>
 
 typedef struct { // all logicgates variables (shared state) are defined here
