@@ -778,7 +778,7 @@ void hlgcompset(logicgates *selfp) { // sets hlgcomp to whatever component the m
     self.hlgcomp = 0;
     int len = self.components -> length;
     for (int i = 1; i < len; i++) {
-        if ((self.mx / self.globalsize - self.screenX + 18) > self.positions -> data[i * 3 - 2].d && (self.mx / self.globalsize - self.screenX - 18) < self.positions -> data[i * 3 - 2].d && (self.my / self.globalsize - self.screenY + 18) > self.positions -> data[i * 3 - 1].d && (self.my / self.globalsize - self.screenY - 18) < self.positions -> data[i * 3 - 1].d) {
+        if ((self.mx / self.globalsize - self.screenX + 14) > self.positions -> data[i * 3 - 2].d && (self.mx / self.globalsize - self.screenX - 14) < self.positions -> data[i * 3 - 2].d && (self.my / self.globalsize - self.screenY + 14) > self.positions -> data[i * 3 - 1].d && (self.my / self.globalsize - self.screenY - 14) < self.positions -> data[i * 3 - 1].d) {
             self.hlgcomp = i;
         }
     }

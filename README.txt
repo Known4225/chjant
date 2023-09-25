@@ -12,10 +12,10 @@ Current features include:
 Bitwise NOT, AND, and OR
 Parentheses parsing
 Assigning new variables and redefining old ones
+Logical operators
 
 ToAdd:
 Increments and Decrements
-Logical operators
 Shifts left and right
 Addition and subtraction
 Multiplication
