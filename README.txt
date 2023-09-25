@@ -11,15 +11,17 @@ or exe on windows. There are no dependencies for seagate.
 Current features include:
 Bitwise NOT, AND, and OR
 Parentheses parsing
+Assigning new variables and redefining old ones
 
 ToAdd:
-Assigning new variables (should be not too difficult)
-Logical operators (not too bad)
+Increments and Decrements
+Logical operators
 Shifts left and right
-Addition and subtraction (a bit harder)
+Addition and subtraction
 Multiplication
 Division and Modulo
 Funky assignment operations
+Loops (?) - may be impossible, I guess I could incorporate a clock, but then I'd need memory and at that point I might as well just build a computer
 
 
 To be honest, it's a miracle that this thing barely works in its current state

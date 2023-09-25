@@ -2033,9 +2033,9 @@ int main(int argc, char *argv[]) {
     /* initialize turtle */
     turtleInit(window, -240, -180, 240, 180);
     /* initialise textGL */
-    textGLInit(window, "include/fontBez.tgl");
+    textGLInit(window, "../include/fontBez.tgl");
     /* initialise ribbon */
-    ribbonInit(window, "include/ribbonConfig.txt");
+    ribbonInit(window, "../include/ribbonConfig.txt");
 
     /* initialise win32tools */
     win32toolsInit();

@@ -22,6 +22,7 @@ typedef struct {
     char *gateout; // filename_gates
     int charPtr;
     int strPtr;
+    int typeSize;
     int constantType;
     unitype constant;
     list_t *pstr; // characters
@@ -29,7 +30,7 @@ typedef struct {
     list_t *syntaxic; // list of spaceDeprivedChars and their positions
     list_t *keywords; // all keywords in C
     list_t *registers; // register spec: 4 items per register, it goes name (string), size in bits (int), number of references (int), list of component handles (list_t *)
-    list_t *namespace;
+    list_t *namespace; // spec: 3 items per namespace, name, type, 0 for variable, 1 for function
 
     /* logicgates data emulator */
     list_t *components; // list of components (1 item for each component, a string with "POWER", "AND", etc), a component's "ID" or "Handle" is that component's index in this list
@@ -39,7 +40,8 @@ typedef struct {
     list_t *positions; // list of component positions (3 items for each component, doubles specifying x, y, and angle)
     list_t *wiring; // list of component connections (3 items per connection, it goes sender (ID), reciever (ID), powered (0 or 1))
     double compDist; // how far apart components are
-    double gateX;
+    double gateLeftX;
+    double gateRightX;
 
     /* expression evaluator (modified) */
     list_t *quantities;
@@ -51,6 +53,7 @@ typedef struct {
 
 void loadKeywords(seagate *selfp) { // most of these are not useful for this particular application, but I may as well include them all
     seagate self = *selfp;
+    printf("unitype size: %li\n", sizeof(unitype));
     list_append(self.keywords, (unitype) "auto", 's');
     list_append(self.keywords, (unitype) "break", 's');
     list_append(self.keywords, (unitype) "case", 's');
@@ -121,7 +124,9 @@ void loadKeywords(seagate *selfp) { // most of these are not useful for this par
     self.wiring = list_init();
     list_append(self.wiring, (unitype) 'n', 'c');
     self.compDist = 32;
-    self.gateX = 0;
+    self.gateLeftX = 0;
+    self.gateRightX = 0;
+
 
     self.quantities = list_init();
     self.subsect = list_init();
@@ -250,8 +255,26 @@ char checkSyntax(seagate *selfp, int position, int column) { // returns the synt
     return '\0';
 }
 
+int setSyntax(seagate *selfp, int position, int column, char toSet) { // haha, getters and setters in C
+    seagate self = *selfp;
+    char keep = 0;
+    for (int i = 0; i < self.syntaxic -> length; i += 2) {
+        if (self.syntaxic -> data[i].i == position) {
+            keep += 1;
+            if (keep == column) {
+                self.syntaxic -> data[i + 1].c = toSet;
+                return 0;
+            }
+        }
+        if (self.syntaxic -> data[i].i > position)
+            return -1;
+    }
+    return -1;
+}
+
 int checkType(seagate *selfp) { // returns the type specified at strPtr (in the form described in the type indicators section). Returns 0 if there is no type
     seagate self = *selfp;
+    self.typeSize = 0;
     int out = 0x80000000;
     while (strcmp(self.strData -> data[self.strPtr].s, "register") == 0 && 
     strcmp(self.strData -> data[self.strPtr].s, "volatile") == 0 &&
@@ -271,10 +294,12 @@ int checkType(seagate *selfp) { // returns the type specified at strPtr (in the 
     if (strcmp(self.strData -> data[self.strPtr].s, "char") == 0) {
         out |= 0x1;
         self.strPtr += 1;
+        self.typeSize = 8;
     } else {
     if (strcmp(self.strData -> data[self.strPtr].s, "short") == 0) {
         out |= 0x2;
         self.strPtr += 1;
+        self.typeSize = 16;
         if (strcmp(self.strData -> data[self.strPtr].s, "int") == 0) {
             self.strPtr += 1;
         }
@@ -282,16 +307,19 @@ int checkType(seagate *selfp) { // returns the type specified at strPtr (in the 
     if (strcmp(self.strData -> data[self.strPtr].s, "int") == 0) {
         out |= 0x4;
         self.strPtr += 1;
+        self.typeSize = 32;
     } else {
     if (strcmp(self.strData -> data[self.strPtr].s, "long") == 0) {
         self.strPtr += 1;
         if (strcmp(self.strData -> data[self.strPtr].s, "int") == 0) {
             out |= 0x4;
             self.strPtr += 1;
+            self.typeSize = 32;
         } else {
         if (strcmp(self.strData -> data[self.strPtr].s, "long") == 0) {
             out |= 0x8;
             self.strPtr += 1;
+            self.typeSize = 64;
             if (strcmp(self.strData -> data[self.strPtr].s, "int") == 0) {
                 self.strPtr += 1;
             }
@@ -303,10 +331,12 @@ int checkType(seagate *selfp) { // returns the type specified at strPtr (in the 
     if (strcmp(self.strData -> data[self.strPtr].s, "float") == 0) {
         out |= 0x10;
         self.strPtr += 1;
+        self.typeSize = 32;
     } else {
     if (strcmp(self.strData -> data[self.strPtr].s, "double") == 0) {
         out |= 0x20;
         self.strPtr += 1;
+        self.typeSize = 64;
     } else {
     out = 0;
     } // clean coding
@@ -405,7 +435,7 @@ void recordRegFromNamespace(seagate *selfp) { // creates a register from the las
             list_append(self.positions, (unitype) (-self.compDist), 'd');
             list_append(self.positions, (unitype) 180.0, 'd');
         } else {
-            list_append(self.positions, (unitype) (self.gateX - self.compDist * i), 'd');
+            list_append(self.positions, (unitype) (self.gateLeftX - self.compDist * i), 'd');
             list_append(self.positions, (unitype) self.compDist, 'd');
             list_append(self.positions, (unitype) 0, 'd');
         }
@@ -417,9 +447,9 @@ void recordRegFromNamespace(seagate *selfp) { // creates a register from the las
         list_append(self.inpComp, (unitype) 0, 'i');
     }
     if (self.registers -> length != 4)
-        self.gateX -= self.compDist * (size + 2);
-    printf("registers: ");
-    list_print(self.registers);
+        self.gateLeftX -= self.compDist * (size + 2);
+    // printf("registers: ");
+    // list_print(self.registers);
     *selfp = self;
 }
 
@@ -464,6 +494,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     /* temporary copy constructor if the register is operated on itself */
     if (reference1 == reference2) { // this doesn't check if it's an operation on two registers, but it shouldn't matter
         char tempLookup[strlen(ref1name) + 5];
+        memcpy(tempLookup, ref1name, strlen(ref1name));
         memcpy(tempLookup + strlen(ref1name), "COPY", 5);
         int checkForCopy = checkNamespace(&self, tempLookup);
         if (checkForCopy == -1) {
@@ -557,10 +588,10 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     memcpy(newName + strlen(ref1name) + 3, ref2name, strlen(ref2name) + 1);
     self.opResult = newName;
     list_append(self.registers, (unitype) newName, 's');
-    list_append(self.registers, (unitype) size1, 'i');
+    list_append(self.registers, (unitype) smallerSize, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
-    for (int i = 0; i < size1; i++) {
+    for (int i = 0; i < smallerSize; i++) {
         list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) self.components -> length, 'i');
         list_append(self.components, (unitype) "AND", 's');
         list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDist * i), 'd'); // same x position as reference1 register
@@ -578,11 +609,9 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
         list_append(self.wiring, (unitype) self.registers -> data[reference1 + 3].r -> data[i], 'i');
         list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
         list_append(self.wiring, (unitype) 0, 'i');
-        if (i < size2) {
-            list_append(self.wiring, (unitype) self.registers -> data[reference2 + 3].r -> data[i], 'i');
-            list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
-            list_append(self.wiring, (unitype) 0, 'i');
-        }
+        list_append(self.wiring, (unitype) self.registers -> data[reference2 + 3].r -> data[i], 'i');
+        list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+        list_append(self.wiring, (unitype) 0, 'i');
     }
     break;
 
@@ -599,10 +628,10 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     memcpy(newName + strlen(ref1name) + 2, ref2name, strlen(ref2name) + 1);
     self.opResult = newName;
     list_append(self.registers, (unitype) newName, 's');
-    list_append(self.registers, (unitype) size1, 'i');
+    list_append(self.registers, (unitype) smallerSize, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
-    for (int i = 0; i < size1; i++) {
+    for (int i = 0; i < smallerSize; i++) {
         list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) self.components -> length, 'i');
         list_append(self.components, (unitype) "OR", 's');
         list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDist * i), 'd'); // same x position as reference1 register
@@ -620,11 +649,9 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
         list_append(self.wiring, (unitype) self.registers -> data[reference1 + 3].r -> data[i], 'i');
         list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
         list_append(self.wiring, (unitype) 0, 'i');
-        if (i < size2) {
-            list_append(self.wiring, (unitype) self.registers -> data[reference2 + 3].r -> data[i], 'i');
-            list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
-            list_append(self.wiring, (unitype) 0, 'i');
-        }
+        list_append(self.wiring, (unitype) self.registers -> data[reference2 + 3].r -> data[i], 'i');
+        list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+        list_append(self.wiring, (unitype) 0, 'i');
     }
     break;
 
@@ -632,14 +659,47 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
 
 
 
-    case 4:
+    case 4: ; // bitwise XOR
+    self.registers -> data[reference1 + 2].i += 1; // increment source register reference count
+    self.registers -> data[reference2 + 2].i += 1;
+    newName = malloc(strlen(ref1name) + strlen(ref2name) + 4);
+    memcpy(newName, ref1name, strlen(ref1name)); // create a new register called {reference1.name}OR{reference2.name}
+    memcpy(newName + strlen(ref1name), "XOR", 3);
+    memcpy(newName + strlen(ref1name) + 3, ref2name, strlen(ref2name) + 1);
+    self.opResult = newName;
+    list_append(self.registers, (unitype) newName, 's');
+    list_append(self.registers, (unitype) smallerSize, 'i');
+    list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
+    list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    for (int i = 0; i < smallerSize; i++) {
+        list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) self.components -> length, 'i');
+        list_append(self.components, (unitype) "XOR", 's');
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDist * i), 'd'); // same x position as reference1 register
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDist * self.registers -> data[reference1 + 2].i), 'd'); // y position of reference1 + compDist * number of references
+        list_append(self.positions, (unitype) 0, 'd'); // facing upwards
+        list_append(self.io, (unitype) 0, 'i');
+        list_append(self.io, (unitype) 0, 'i');
+        list_append(self.io, (unitype) 0, 'i');
+        list_append(self.inpComp, self.compSlots -> data[list_find(self.compSlots, (unitype) "XOR", 's') + 1], 'i');
+        list_append(self.inpComp, self.registers -> data[reference1 + 3].r -> data[i], 'i');
+        list_append(self.inpComp, self.registers -> data[reference2 + 3].r -> data[i], 'i');
+
+        /* add wiring from reference register, in this case it's a 1 to 1 bit to bit */
+        // printf("ref1 %d\n", reference1);
+        list_append(self.wiring, (unitype) self.registers -> data[reference1 + 3].r -> data[i], 'i');
+        list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+        list_append(self.wiring, (unitype) 0, 'i');
+        list_append(self.wiring, (unitype) self.registers -> data[reference2 + 3].r -> data[i], 'i');
+        list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+        list_append(self.wiring, (unitype) 0, 'i');
+    }
     break;
 
 
 
 
 
-    case 5:
+    case 5: ; // logical NOT
     break;
 
 
@@ -699,7 +759,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
 
     case 15: ; // piping
     if (size1 != size2) {
-        printf("Warning: bit mismatch assigning %s (%d bits) to %s (%d bits)\n", self.registers -> data[reference1].s, self.registers -> data[reference1 + 1].i, self.registers -> data[reference2].s, self.registers -> data[reference2 + 1].i);
+        printf("Warning: bit mismatch piping %s (%d bits) to %s (%d bits)\n", self.registers -> data[reference1].s, self.registers -> data[reference1 + 1].i, self.registers -> data[reference2].s, self.registers -> data[reference2 + 1].i);
     }
     for (int i = 0; i < smallerSize; i++) {
         self.inpComp -> data[self.registers -> data[reference1 + 3].r -> data[i].i * 3 - 1].i = self.registers -> data[reference2 + 3].r -> data[i].i; // for some reason power components accept inputs into their second input (?) (probably to do with the special case for power blocks)
@@ -708,25 +768,49 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
         list_append(self.wiring, (unitype) 0, 'i');
     }
     break;
+
+
+
+
+    case 21: ; // addition
+    break;
+
+
+
+
+    case 22: ; // subtraction
+    break;
+
+
+
+
+    case 23: ; // multiplication
+    break;
+
+
+
+    case 24: ; // division
+    break;
+
+
+
+    case 25: ; // modulo
+    break;
     }
     *selfp = self;
 }
 
-// void connectReg(seagate *selfp, int reg1, int reg2, int operation) { // connects two registers
-
-// }
-
-
-
-int packageExpression(seagate *selfp, int index) {
+int packageExpression(seagate *selfp) {
     seagate self = *selfp;
+    int index = self.strPtr; // for errors
+    list_clear(self.quantities);
     char synt;
     int step;
     char end = 0;
     while (!end) {
         list_t *tempList = list_init();
         step = 1;
-        synt = checkSyntax(&self, index, step);
+        synt = checkSyntax(&self, self.strPtr, step);
         while (synt != '\0') {
             if (synt == ';') {
                 end = 1;
@@ -736,18 +820,20 @@ int packageExpression(seagate *selfp, int index) {
                 list_append(tempList, (unitype) synt, 'c');
             }
             step += 1;
-            synt = checkSyntax(&self, index, step);
+            synt = checkSyntax(&self, self.strPtr, step);
         }
         if (tempList -> length > 0)
             list_append(self.quantities, (unitype) tempList, 'r');
         if (!end)
-            list_append(self.quantities, self.strData -> data[index], 's');
-        index += 1;
+            list_append(self.quantities, self.strData -> data[self.strPtr], 's');
+        self.strPtr += 1;
     }
-    
+    printf("quantities (begin expression): ");
+    list_print(self.quantities);
+    // list_copy(self.quantities, self.subsect);
 
     /* routine: break into subsection */
-    while (self.quantities -> length > 1) {
+    while (self.quantities -> length > 0) {
     printf("quantities: ");
     list_print(self.quantities);
     list_clear(self.subsect);
@@ -775,8 +861,8 @@ int packageExpression(seagate *selfp, int index) {
                 }
                 if (self.quantities -> data[throw13].r -> data[i].c == '(') {
                     throw14 = throw13;
-                    printf("paraList: ");
-                    list_print(paraList);
+                    // printf("paraList: ");
+                    // list_print(paraList);
                     list_clear(leftover);
                     for (int j = 0; j < i; j++) {
                         list_append(leftover, self.quantities -> data[throw13].r -> data[j], 'c');
@@ -805,10 +891,10 @@ int packageExpression(seagate *selfp, int index) {
             list_delete(self.quantities, throw14);
         }
     }
-    printf("quan: ");
-    list_print(self.quantities);
-    printf("subsect: ");
-    list_print(self.subsect);
+    // printf("quan: ");
+    // list_print(self.quantities);
+    // printf("subsect: ");
+    // list_print(self.subsect);
 
     /* first pass: namespace checking and initialise constants */
     for (int j = 0; j < self.subsect -> length; j++) {
@@ -836,7 +922,7 @@ int packageExpression(seagate *selfp, int index) {
                     for (int i = 0; i < constSize; i++) {
                         list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) self.components -> length, 'i');
                         list_append(self.components, (unitype) "POWER", 's');
-                        list_append(self.positions, (unitype) (self.gateX - self.compDist * i), 'd');
+                        list_append(self.positions, (unitype) (self.gateLeftX - self.compDist * i), 'd'); // constants go to the left of input registers
                         list_append(self.positions, (unitype) self.compDist, 'd');
                         list_append(self.positions, (unitype) 0, 'd');
                         list_append(self.io, (unitype) 0, 'i');
@@ -847,7 +933,7 @@ int packageExpression(seagate *selfp, int index) {
                         list_append(self.inpComp, (unitype) 0, 'i');
                     }
                     if (self.registers -> length != 4)
-                        self.gateX -= self.compDist * (constSize + 2);
+                        self.gateLeftX -= self.compDist * (constSize + 2);
                     long long value = self.constant.l; // load the value into the register
                     unsigned long long mask = (unsigned long long) 1 << (constSize - 1);
                     for (int i = 0; i < constSize; i++) {
@@ -1128,7 +1214,7 @@ int packageExpression(seagate *selfp, int index) {
     if (self.quantities -> length > 2) {
         int modifier = 0;
         int modifier2 = 0;
-        printf("%d %d\n", throw14, throw13);
+        printf("throws: %d %d\n", throw14, throw13);
         // printf("%c\n", self.quantities -> type[throw14 + 1]);
         if (self.quantities -> type[throw14 + 1] == 's') {
             modifier = 1;
@@ -1150,6 +1236,11 @@ int packageExpression(seagate *selfp, int index) {
         printf("quantities after : ");
         list_print(self.quantities);
         }
+        if (self.quantities -> length == 1) { // exit if length is 1
+            break;
+        }
+        // printf("registers: ");
+        // list_print(self.registers);
     }
     printf("subsect: ");
     list_print(self.subsect);
@@ -1160,6 +1251,7 @@ int packageExpression(seagate *selfp, int index) {
     /* there might be issues with ++ because of this, but at this point I do not care and just want to see some results */
 
     *selfp = self;
+    printf("completed expression\n");
     return 0;
 }
 
@@ -1300,6 +1392,7 @@ int main(int argc, char *argv[]) {
     0x20 - double
     */
     self.strPtr = 0;
+    self.typeSize = 0;
     int currentType = checkType(&self);
     list_append(self.namespace, self.strData -> data[self.strPtr], 's'); // add seagate to namespaces
     self.strPtr += 1; // skip seagate
@@ -1361,22 +1454,83 @@ int main(int argc, char *argv[]) {
     int test57 = '5' + '7'; // the fact that you can do shit like this is the reason i'm going to be diagnosed with Agoraphobia by the time this project is complete
     int testNot57 = !~!57; // you gotta be fucking kidding me dude
     int test102 = test57 --+-+-+6; // i'll never finish
+    while (self.strPtr < self.strData -> length) {
+        if (strcmp(self.strData -> data[self.strPtr].s, "return") == 0) { // return value
+            printf("return at word %d\n", self.strPtr);
+            self.strPtr += 1;
+            /* return possibilities include:
+            constants
+            namespaces
+            operations on either of those
+            nothing
+            */
+            if (packageExpression(&self) == -1) { // we parse the expression after the return statement
+                return -1;
+            }
+            /* pipe the output into the return register */
+            recordPaddedReg(&self, 0, checkNamespace(&self, self.subsect -> data[0].s), 15);
+            break;
+        } else {
+        int strPtrSaved = self.strPtr; // tempsave the strPtr so we can checkType
+        currentType = checkType(&self);
+        if (currentType != 0) { // new register
+            list_append(self.namespace, self.strData -> data[self.strPtr], 's'); // inputX
+            self.strPtr += 1; // skip inputX
+            list_append(self.namespace, (unitype) currentType, 'i'); // add inputX type to namespaces
+            list_append(self.namespace, (unitype) 0, 'i'); // add '0' to indicate variable
+            recordRegFromNamespace(&self);
+            printf("syntaxic: ");
+            list_print(self.syntaxic);
+            int updateReg = self.registers -> length - 4; // this register represents the new variable we've just created
+            printf("(new) syntax at %d: %c\n", self.strPtr, checkSyntax(&self, self.strPtr, 1));
+            if (checkSyntax(&self, self.strPtr, 1) == '=') {
+                printf("assigning %s\n", self.namespace -> data[self.namespace -> length - 3].s);
+                setSyntax(&self, self.strPtr, 1, ' ');
+                if (packageExpression(&self) == -1) { // parse the expression
+                    return -1;
+                }
+            }
+            /* pipe the output into the updateReg */
+            // printf("%d %d\n", updateReg, checkNamespace(&self, self.subsect -> data[0].s));
+            recordPaddedReg(&self, updateReg, checkNamespace(&self, self.subsect -> data[0].s), 15);
 
-    //unitype returnValue; // so we kind of don't know what type the return value is
-    if (strcmp(self.strData -> data[self.strPtr].s, "return") == 0) {
-        printf("return at word %d\n", self.strPtr);
-        self.strPtr += 1;
-        /* return possibilities include:
-        constants
-        namespaces
-        operations on either of those
-        nothing
-        */
-        if (packageExpression(&self, self.strPtr) == -1) { // we parse the expression after the return statement
-            return -1;
+            
+        } else {
+        self.strPtr = strPtrSaved;
+        int oldReg = checkNamespace(&self, self.strData -> data[self.strPtr].s);
+        if (oldReg != -1) { // reassignment of old register
+            currentType = self.namespace -> data[list_find(self.namespace, self.strData -> data[self.strPtr], 's') + 1].i;
+            char *redefine = malloc(strlen(self.strData -> data[self.strPtr].s) + 4);
+            memcpy(redefine, self.strData -> data[self.strPtr].s, strlen(self.strData -> data[self.strPtr].s));
+            memcpy(redefine + strlen(self.strData -> data[self.strPtr].s), "REF", 4);
+            list_append(self.namespace, (unitype) redefine, 's'); // inputX
+            self.strPtr += 1; // skip inputX
+            list_append(self.namespace, (unitype) currentType, 'i'); // add inputX type to namespaces
+            list_append(self.namespace, (unitype) 0, 'i'); // add '0' to indicate variable
+            recordRegFromNamespace(&self);
+            printf("syntaxic: ");
+            list_print(self.syntaxic);
+            int updateReg = self.registers -> length - 4; // this register represents the new variable we've just created
+            printf("(redefine) syntax at %d: %c\n", self.strPtr, checkSyntax(&self, self.strPtr, 1));
+            if (checkSyntax(&self, self.strPtr, 1) == '=') {
+                printf("assigning %s\n", self.namespace -> data[self.namespace -> length - 3].s);
+                setSyntax(&self, self.strPtr, 1, ' ');
+                if (packageExpression(&self) == -1) { // parse the expression
+                    return -1;
+                }
+            }
+            
+            /* pipe the output into the updateReg */
+            recordPaddedReg(&self, updateReg, checkNamespace(&self, self.subsect -> data[0].s), 15);
+            /* reassign the oldReg to the new */
+            recordPaddedReg(&self, oldReg, checkNamespace(&self, self.subsect -> data[0].s), 0);
+        } else {
+
         }
-        /* pipe the output into the return register */
-        recordPaddedReg(&self, 0, checkNamespace(&self, self.subsect -> data[0].s), 15);
+        }
+
+        }
+        self.strPtr -= 1;
     }
 
     /* Eventually we also have to make registers for all of the namespaces:
@@ -1403,15 +1557,6 @@ int main(int argc, char *argv[]) {
     exportGates(&self, self.gateout);
     printf("gate output in %s\n", self.gateout);
     fclose(go);
-
-
-
-    
-    
-
-
-
-
 
 
     printf("completed\n");
