@@ -5,8 +5,8 @@ Write C code in the seagateFunction.c file and then run seagate.o.
 The code will generate a text file that can then be loaded into the logic gates simulator.
 
 You can use make to make the seagate program, or use
-gcc seagate.c -o seagate.o
-or exe on windows. There are no dependencies for seagate.
+gcc seagate.c recordPaddedReg.c include/list.c -o seagate.o
+because i decided to overcomplicate it this time and have it use multiple c files
 
 Current features include:
 Bitwise NOT, AND, and OR

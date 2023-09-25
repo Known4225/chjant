@@ -2,7 +2,7 @@
 
 /* basically this function does all the actual creating of the gates */
 /* this one function is longer than the entire seagate.c file, which does all the file io and parsing */
-/* mostly due to a lot of duplicate code, which i dont really care about, let me do my over 1000+ line switch statement */
+/* mostly due to a lot of duplicate, but still slightly different, code, which i dont really care about, let me do my over 1000+ line switch statement */
 
 void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operation) { // creates a new register from one or two reference handle and an operation
     if (reference1 == -1) {
@@ -43,18 +43,18 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     6 - logical AND
     7 - logical OR
     8 - logical XOR
-    9 - shift left (unsigned SHL only)
-    10 - shift right (unsigned SHR only)
-    11 - increment (reference1)
-    12 - decrement (reference1)
-    13 - negative (reference1)
+    9 - shift left (unsigned SHL only) ~
+    10 - shift right (unsigned SHR only) ~
+    11 - increment (reference1) ~
+    12 - decrement (reference1) ~
+    13 - negative (reference1) ~
     14 - logical equals
     15 - pipe output from register2 to register1
-    21 - add
-    22 - subtract
-    23 - multiply
-    24 - divide
-    25 - modulo
+    21 - add ~
+    22 - subtract ~
+    23 - multiply ~
+    24 - divide ~
+    25 - modulo ~
     */
     /* temporary copy constructor if the register is operated on itself */
     if (reference1 == reference2) { // this doesn't check if it's an operation on two registers, but it shouldn't matter
