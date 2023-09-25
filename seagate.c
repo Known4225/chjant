@@ -279,11 +279,11 @@ int checkType(seagate *selfp) { // returns the type specified at strPtr (in the 
     seagate self = *selfp;
     self.typeSize = 0;
     int out = 0x80000000;
-    while (strcmp(self.strData -> data[self.strPtr].s, "register") == 0 && 
-    strcmp(self.strData -> data[self.strPtr].s, "volatile") == 0 &&
-    strcmp(self.strData -> data[self.strPtr].s, "auto") == 0 &&
-    strcmp(self.strData -> data[self.strPtr].s, "extern") == 0 &&
-    strcmp(self.strData -> data[self.strPtr].s, "static") == 0 &&
+    while (strcmp(self.strData -> data[self.strPtr].s, "register") == 0 || 
+    strcmp(self.strData -> data[self.strPtr].s, "volatile") == 0 ||
+    strcmp(self.strData -> data[self.strPtr].s, "auto") == 0 ||
+    strcmp(self.strData -> data[self.strPtr].s, "extern") == 0 ||
+    strcmp(self.strData -> data[self.strPtr].s, "static") == 0 ||
     strcmp(self.strData -> data[self.strPtr].s, "const") == 0) { // we pretty much ignore all of this
         self.strPtr += 1;
     }
@@ -348,6 +348,16 @@ int checkType(seagate *selfp) { // returns the type specified at strPtr (in the 
     } // only triple nested !
     } // amazing
     } // yes
+    if (out != 0) { // get rid of training "const"s and others
+        while (strcmp(self.strData -> data[self.strPtr].s, "register") == 0 || 
+        strcmp(self.strData -> data[self.strPtr].s, "volatile") == 0 ||
+        strcmp(self.strData -> data[self.strPtr].s, "auto") == 0 ||
+        strcmp(self.strData -> data[self.strPtr].s, "extern") == 0 ||
+        strcmp(self.strData -> data[self.strPtr].s, "static") == 0 ||
+        strcmp(self.strData -> data[self.strPtr].s, "const") == 0) { // we pretty much ignore all of this
+            self.strPtr += 1;
+        }
+    }
     *selfp = self;
     return out;
 }
@@ -1248,9 +1258,9 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     preMoveHeight = self.registers -> data[reference1 + 2].i;
     self.registers -> data[reference1 + 2].i += 1; // increment source register reference count
     newName = malloc(strlen(ref1name) + strlen(ref2name) + 2);
-    memcpy(newName, ref1name, strlen(ref1name)); // create a new register called {reference1.name}X{reference2.name}
-    memcpy(newName + strlen(ref1name), "X", 1);
-    memcpy(newName + strlen(ref1name) + 1, ref2name, strlen(ref2name) + 1);
+    memcpy(newName, ref1name, strlen(ref1name)); // create a new register called {reference1.name}XN{reference2.name}
+    memcpy(newName + strlen(ref1name), "XN", 2);
+    memcpy(newName + strlen(ref1name) + 2, ref2name, strlen(ref2name) + 1);
     self.opResult = newName;
     list_append(self.registers, (unitype) newName, 's');
     list_append(self.registers, (unitype) smallerSize, 'i');
