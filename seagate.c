@@ -239,6 +239,7 @@ void readString(seagate *selfp) { // parses pstr into strData and syntaxHighligh
     }
     list_print(self.strData);
     list_print(self.syntaxic);
+    list_free(tempStr);
     *selfp = self;
 }
 
@@ -1506,6 +1507,7 @@ int packageExpression(seagate *selfp) {
     // list_copy(self.quantities, self.subsect);
 
     /* routine: break into subsection */
+    list_t *toDoStack = list_init(); // represents a list of instructions to perform after the expression has been evaluated
     while (self.quantities -> length > 0) {
     printf("quantities: ");
     list_print(self.quantities);
@@ -1563,6 +1565,8 @@ int packageExpression(seagate *selfp) {
         if (leftover -> length == 0) {
             list_delete(self.quantities, throw14);
         }
+    } else {
+        list_free(leftover);
     }
     // printf("quan: ");
     // list_print(self.quantities);
@@ -1625,7 +1629,6 @@ int packageExpression(seagate *selfp) {
 
     /* second pass: modify registers */
     /* gonna use a stack-based approach */
-    list_t *toDoStack = list_init(); // represents a list of instructions to perform after the expression has been evaluated
     step = 0;
     while (step < self.subsect -> length) {
         if (self.subsect -> type[step] == 'r') {
@@ -1923,8 +1926,13 @@ int packageExpression(seagate *selfp) {
     /* that's why it's called the stack approach actually that wasn't originally why but it is now */
     /* there might be issues with ++ because of this, but at this point I do not care and just want to see some results */
 
-    *selfp = self;
     printf("completed expression\n");
+    /* assign via the toDoStack */
+    for (int i = toDoStack -> length - 2; i > -1; i += 2) {
+        recordPaddedReg(&self, checkNamespace(&self, toDoStack -> data[i].s), checkNamespace(&self, toDoStack -> data[i + 1].s), 0);
+    }
+    list_free(toDoStack);
+    *selfp = self;
     return 0;
 }
 
@@ -2231,6 +2239,25 @@ int main(int argc, char *argv[]) {
     printf("gate output in %s\n", self.gateout);
     fclose(go);
 
-
+    /* free stuff */
+    list_free(self.pstr);
+    list_free(self.strData);
+    list_free(self.syntaxic);
+    list_free(self.keywords);
+    list_free(self.registers);
+    list_free(self.namespace);
+    list_free(self.components);
+    list_free(self.compSlots);
+    list_free(self.inpComp);
+    list_free(self.io);
+    list_free(self.positions);
+    list_free(self.wiring);
+    list_free(self.quantities);
+    list_free(self.subsect);
+    list_free(self.order);
+    list_free(self.operatorPrecedence);
+    free(self.filein);
+    free(self.fileout);
+    free(self.gateout);
     printf("completed\n");
 }
