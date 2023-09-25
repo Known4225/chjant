@@ -2046,7 +2046,7 @@ int main(int argc, char *argv[]) {
     /* initialize turtle */
     turtleInit(window, -240, -180, 240, 180);
     /* initialise textGL */
-    textGLInit(window, "../include/fontBez.tgl");
+    textGLInit(window, "../include/fontBez.tgl"); // this works on ubuntu if I run the executable from the /seagate/logicgates folder but not from /seagate folder. Perhaps it is using the folder I call from as the reference point
     /* initialise ribbon */
     ribbonInit(window, "../include/ribbonConfig.txt");
 
@@ -2067,7 +2067,7 @@ int main(int argc, char *argv[]) {
             self.wireType = 1;
             importN = 2;
         } else {
-            if (strcmp(argv[2], "dev") == 0) {
+            if (argv[2] != NULL && strcmp(argv[2], "dev") == 0) {
                 self.wireType = 1;
             }
         }
