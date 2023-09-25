@@ -1010,90 +1010,99 @@ void compareAng(logicgates *selfp, int index1, int index2, int comp1, int comp2,
     // turtleGoto(x3 + sin(rot / 57.2958) * 10, y3 + cos(rot / 57.2958) * 10);
     // turtlePenUp();
     // turtlePenSize(2);
-    double sinRot = sin(rot / 57.2958);
-    double cosRot = cos(rot / 57.2958);
-    double morphX1 = ((x3 - x1) * cosRot) - ((y3 - y1) * sinRot);
-    double morphY1 = ((x3 - x1) * sinRot) - ((y3 - y1) * cosRot);
-    double morphX2 = ((x3 - x2) * cosRot) - ((y3 - y2) * sinRot);
-    double morphY2 = ((x3 - x2) * sinRot) - ((y3 - y2) * cosRot);
-    // printf("x1: %.2lf x2: %.2lf x3: %.2lf\n", x1, x2, x3);
-    char comp1Quad = 1;
-    double comp1Ang = atan((x3 - x1) / (y3 - y1)) - rot / 57.2958;
-    if (y1 > y3) {
-        comp1Ang += 3.1415926;
-    }
-    if (sin(comp1Ang) < 0) {
-        comp1Quad += 2;
-        if (cos(comp1Ang) < 0) {
-            comp1Quad += 1;
+    if (self.wireType == 0) {
+        double sinRot = sin(rot / 57.2958);
+        double cosRot = cos(rot / 57.2958);
+        double morphX1 = ((x3 - x1) * cosRot) - ((y3 - y1) * sinRot);
+        double morphY1 = ((x3 - x1) * sinRot) - ((y3 - y1) * cosRot);
+        double morphX2 = ((x3 - x2) * cosRot) - ((y3 - y2) * sinRot);
+        double morphY2 = ((x3 - x2) * sinRot) - ((y3 - y2) * cosRot);
+        // printf("x1: %.2lf x2: %.2lf x3: %.2lf\n", x1, x2, x3);
+        char comp1Quad = 1;
+        double comp1Ang = atan((x3 - x1) / (y3 - y1)) - rot / 57.2958;
+        if (y1 > y3) {
+            comp1Ang += 3.1415926;
         }
-    } else {
-        if (cos(comp1Ang) > 0) {
-            comp1Quad += 1;
-        }
-    }
-    char comp2Quad = 1;
-    double comp2Ang = atan((x3 - x2) / (y3 - y2)) - rot / 57.2958;
-    if (y2 > y3) {
-        comp2Ang += 3.1415926;
-    }
-    if (sin(comp2Ang) < 0) {
-        comp2Quad += 2;
-        if (cos(comp2Ang) < 0) {
-            comp2Quad += 1;
-        }
-    } else {
-        if (cos(comp2Ang) > 0) {
-            comp2Quad += 1;
-        }
-    }
-    double compareAngle = atan((x2 - x1) / (y2 - y1)) - rot / 57.2958;
-    if (y1 - y2 > 0) {
-        compareAngle += 3.1415926;
-    }
-    if ((comp1Quad == 2 || comp1Quad == 3) && (comp2Quad == 2 || comp2Quad == 3)) {
-        bothLeft(&self, sinRot, cosRot, comp1 == self.wiring -> data[index1].i, sin(compareAngle) > 0, comp1Quad < 3, comp2Quad < 3);
-    } else {
-        if ((comp1Quad == 1 || comp1Quad == 4) && (comp2Quad == 1 || comp2Quad == 4)) {
-            bothRight(&self, sinRot, cosRot, comp1 == self.wiring -> data[index1].i, sin(compareAngle) > 0, comp1Quad < 3, comp2Quad < 3);
+        if (sin(comp1Ang) < 0) {
+            comp1Quad += 2;
+            if (cos(comp1Ang) < 0) {
+                comp1Quad += 1;
+            }
         } else {
-            oneRight(&self, sinRot, cosRot, comp1 == self.wiring -> data[index1].i, comp1Quad == 1 || comp1Quad == 4, comp1Quad < 3, comp2Quad < 3);
-            // if (asin(morphX2 / (sqrt(morphY2 * morphY2 + morphX2 * morphX2) + 0.001)) > asin(morphX1 / (sqrt(morphY1 * morphY1 + morphX1 * morphX1) + 0.001))) {
-            //     if (comp1 == self.wiring -> data[index1].i) { // check if this function is run on comp1 or comp2
-            //         self.wxOffE = ((cosRot * -4) + 5) * self.globalsize;
-            //         self.wyOffE = (sinRot * 4) * self.globalsize;
-            //     } else {
-            //         self.wxOffE = (cosRot * 4) * self.globalsize;
-            //         self.wyOffE = (sinRot * -4) * self.globalsize;
-            //     }
-            // } else {
-            //     if (comp1 == self.wiring -> data[index1].i) {
-            //         self.wxOffE = ((cosRot * 4)) * self.globalsize;
-            //         self.wyOffE = (sinRot * -4) * self.globalsize;
-            //     } else {
-            //         self.wxOffE = ((cosRot * -4) + 5) * self.globalsize;
-            //         self.wyOffE = (sinRot * 4) * self.globalsize;
-            //     }
-            // }
+            if (cos(comp1Ang) > 0) {
+                comp1Quad += 1;
+            }
+        }
+        char comp2Quad = 1;
+        double comp2Ang = atan((x3 - x2) / (y3 - y2)) - rot / 57.2958;
+        if (y2 > y3) {
+            comp2Ang += 3.1415926;
+        }
+        if (sin(comp2Ang) < 0) {
+            comp2Quad += 2;
+            if (cos(comp2Ang) < 0) {
+                comp2Quad += 1;
+            }
+        } else {
+            if (cos(comp2Ang) > 0) {
+                comp2Quad += 1;
+            }
+        }
+        double compareAngle = atan((x2 - x1) / (y2 - y1)) - rot / 57.2958;
+        if (y1 - y2 > 0) {
+            compareAngle += 3.1415926;
+        }
+        if ((comp1Quad == 2 || comp1Quad == 3) && (comp2Quad == 2 || comp2Quad == 3)) {
+            bothLeft(&self, sinRot, cosRot, comp1 == self.wiring -> data[index1].i, sin(compareAngle) > 0, comp1Quad < 3, comp2Quad < 3);
+        } else {
+            if ((comp1Quad == 1 || comp1Quad == 4) && (comp2Quad == 1 || comp2Quad == 4)) {
+                bothRight(&self, sinRot, cosRot, comp1 == self.wiring -> data[index1].i, sin(compareAngle) > 0, comp1Quad < 3, comp2Quad < 3);
+            } else {
+                oneRight(&self, sinRot, cosRot, comp1 == self.wiring -> data[index1].i, comp1Quad == 1 || comp1Quad == 4, comp1Quad < 3, comp2Quad < 3);
+            }
+        }
+        /* notes:
+        x1, y1 - first (index1) position of wire origin
+        x2, y2 - second (index2) position of wire origin
+        x3, y3 - destination position of wire connection
+
+        if both of the components are to the left of the destination, then we do comparison on the components y positions, and the one with the lower y gets the bottom connection, and the higher y gets the top
+        extra criteria: if the y position of the lower y is below the destination y AND the y position of the upper y is above the destination y, then we remove the extra poke distance of the bottom connection (since wires will not be in danger of crossing)
+
+        if one of the components is to the right of the destination, then it gets the connection closest to it (so if it's above y3, it gets the top one and below it gets the bottom)
+        extra criteria: if the y position of the right side component compares to the destination y does not match the left side components y position when compared to the destination y, then we remove the extra poke distance of the bottom connection
+
+        if both components are to the right of the destination, then we do comparison on the components y positions, and the one with the lower y gets the top connection, and the higher y gets the bottom connection
+        extra criteria: if the y position of the lower y is below the destination y AND the y position of the upper y is above the destination y, then we remove the extra poke distance of the bottom connection AND we reverse the destination (the lower gets the lower, and upper gets the upper)
+
+        generalised:
+        a generalised "to the right of the destination" would be to compare the vectors
+        */
+    } else {
+        double sinRot = sin(rot / 57.2958);
+        double cosRot = cos(rot / 57.2958);
+        double morphX1 = ((x3 - x1) * cosRot) - ((y3 - y1) * sinRot);
+        double morphY1 = ((x3 - x1) * sinRot) - ((y3 - y1) * cosRot);
+        double morphX2 = ((x3 - x2) * cosRot) - ((y3 - y2) * sinRot);
+        double morphY2 = ((x3 - x2) * sinRot) - ((y3 - y2) * cosRot);
+        if (asin(morphX2 / (sqrt(morphY2 * morphY2 + morphX2 * morphX2) + 0.001)) > asin(morphX1 / (sqrt(morphY1 * morphY1 + morphX1 * morphX1) + 0.001))) {
+            if (comp1 == self.wiring -> data[index1].i) {
+                self.wxOffE = (cosRot * -5) * self.globalsize;
+                self.wyOffE = (sinRot * 5) * self.globalsize;
+            } else {
+                self.wxOffE = (cosRot * 5) * self.globalsize;
+                self.wyOffE = (sinRot * -5) * self.globalsize;
+            }
+        } else {
+            if (comp1 == self.wiring -> data[index1].i) {
+                self.wxOffE = (cosRot * 5) * self.globalsize;
+                self.wyOffE = (sinRot * -5) * self.globalsize;
+            } else {
+                self.wxOffE = (cosRot * -5) * self.globalsize;
+                self.wyOffE = (sinRot * 5) * self.globalsize;
+            }
         }
     }
-    /* notes:
-    x1, y1 - first (index1) position of wire origin
-    x2, y2 - second (index2) position of wire origin
-    x3, y3 - destination position of wire connection
-
-    if both of the components are to the left of the destination, then we do comparison on the components y positions, and the one with the lower y gets the bottom connection, and the higher y gets the top
-    extra criteria: if the y position of the lower y is below the destination y AND the y position of the upper y is above the destination y, then we remove the extra poke distance of the bottom connection (since wires will not be in danger of crossing)
-
-    if one of the components is to the right of the destination, then it gets the connection closest to it (so if it's above y3, it gets the top one and below it gets the bottom)
-    extra criteria: if the y position of the right side component compares to the destination y does not match the left side components y position when compared to the destination y, then we remove the extra poke distance of the bottom connection
-
-    if both components are to the right of the destination, then we do comparison on the components y positions, and the one with the lower y gets the top connection, and the higher y gets the bottom connection
-    extra criteria: if the y position of the lower y is below the destination y AND the y position of the upper y is above the destination y, then we remove the extra poke distance of the bottom connection AND we reverse the destination (the lower gets the lower, and upper gets the upper)
-
-    generalised:
-    a generalised "to the right of the destination" would be to compare the vectors
-    */
     *selfp = self;
 }
 void wireIO(logicgates *selfp, int index1, int index2) { // this script actually performs the logic of the logic gates, this will update the output of a gate given its two inputs
@@ -2053,7 +2062,17 @@ int main(int argc, char *argv[]) {
     turtlePenPrez(self.defaultPrez); // set the prez
 
     if (argc > 1) {
-        import(&self, argv[1]);
+        char importN = 1;
+        if (strcmp(argv[1], "dev") == 0) {
+            self.wireType = 1;
+            importN = 2;
+        } else {
+            if (strcmp(argv[2], "dev") == 0) {
+                self.wireType = 1;
+            }
+        }
+        if (argv[importN] != NULL)
+            import(&self, argv[importN]);
     }
     int frame = 0;
     while (turtle.close == 0) {
