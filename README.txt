@@ -13,14 +13,14 @@ Bitwise NOT, AND, and OR
 Parentheses parsing
 Assigning new variables and redefining old ones
 Logical operators
+Increments and Decrements
 
 ToAdd:
-Increments and Decrements
-Shifts left and right
+Shifts left and right (fairly difficult without a clock)
 Addition and subtraction
 Multiplication
 Division and Modulo
-Funky assignment operations
+Funky assignment operations (C has some strange rules with assignment-in-expressions that I need to implement)
 Loops (?) - may be impossible, I guess I could incorporate a clock, but then I'd need memory and at that point I might as well just build a computer
 
 

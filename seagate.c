@@ -461,6 +461,8 @@ int packageExpression(seagate *selfp) {
             list_append(self.quantities, self.strData -> data[self.strPtr], 's');
         self.strPtr += 1;
     }
+    self.strPtr -= 1;
+    printf("strPtr: %s\n", self.strData -> data[self.strPtr].s);
     printf("quantities (begin expression): ");
     list_print(self.quantities);
     // list_copy(self.quantities, self.subsect);
@@ -1137,6 +1139,7 @@ int main(int argc, char *argv[]) {
                 if (packageExpression(&self) == -1) { // parse the expression
                     return -1;
                 }
+                self.strPtr += 1;
             }
             /* pipe the output into the updateReg */
             // printf("%d %d\n", updateReg, checkNamespace(&self, self.subsect -> data[0].s));

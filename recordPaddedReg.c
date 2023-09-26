@@ -1210,7 +1210,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
 
 
 
-    case 24: ; // division, this seems downright impossible
+    case 24: ; // division, this seems downright impossible (https://electronics.stackexchange.com/questions/256665/how-to-build-a-division-logic-circuit)
     break;
 
 
