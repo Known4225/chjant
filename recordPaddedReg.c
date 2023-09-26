@@ -69,6 +69,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
             list_append(self.registers, (unitype) size1, 'i');
             list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
             list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+            list_append(self.deleteStack, (unitype) strdup(tempLookup), 's');
+            list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
             for (int i = 0; i < size1; i++) {
                 list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) self.components -> length, 'i');
                 list_append(self.components, (unitype) "POWER", 's');
@@ -116,11 +118,13 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     newName = malloc(strlen(ref1name) + 4);
     memcpy(newName, ref1name, strlen(ref1name)); // create a new register called {reference1.name}NOT
     memcpy(newName + strlen(ref1name), "NOT", 4);
-    list_append(self.registers, (unitype) newName, 's');
     self.opResult = newName;
+    list_append(self.registers, (unitype) newName, 's');
     list_append(self.registers, (unitype) size1, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
     for (int i = 0; i < size1; i++) {
         list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) self.components -> length, 'i');
         list_append(self.components, (unitype) "NOT", 's');
@@ -156,6 +160,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) smallerSize, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
     for (int i = 0; i < smallerSize; i++) {
         list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) self.components -> length, 'i');
         list_append(self.components, (unitype) "AND", 's');
@@ -195,6 +201,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) smallerSize, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
     for (int i = 0; i < smallerSize; i++) {
         list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) self.components -> length, 'i');
         list_append(self.components, (unitype) "OR", 's');
@@ -233,6 +241,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) smallerSize, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
     for (int i = 0; i < smallerSize; i++) {
         list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) self.components -> length, 'i');
         list_append(self.components, (unitype) "XOR", 's');
@@ -270,6 +280,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) size1, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
 
     /* initialise wireTemp */
     list_clear(wireTemp);
@@ -336,6 +348,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) smallerSize, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
 
     /* create ORs for register1 */
     /* initialise wireTemp */
@@ -467,6 +481,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) smallerSize, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
 
     /* create ORs for register1 */
     /* initialise wireTemp */
@@ -602,6 +618,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) smallerSize, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
 
     list_clear(wireTemp);
     for (int i = 0; i < smallerSize; i++) {
@@ -784,6 +802,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) size1, 'i');
     list_append(self.registers, (unitype) 0.5, 'i'); // need height raised by default, this can get messy
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
     for (int i = 0; i < size1; i++) {
         /* XOR gates */
         list_append(self.components, (unitype) "XOR", 's');
@@ -881,6 +901,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) size1, 'i');
     list_append(self.registers, (unitype) 1, 'i'); // need height raised by default, this can get messy
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
     for (int i = 0; i < size1; i++) {
         /* XOR gates */
         list_append(self.components, (unitype) "XOR", 's');
@@ -1004,6 +1026,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     list_append(self.registers, (unitype) smallerSize, 'i');
     list_append(self.registers, (unitype) 0, 'i'); // 0 references to this register so far
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
 
     list_clear(wireTemp);
     for (int i = 0; i < smallerSize; i++) {

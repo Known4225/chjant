@@ -39,6 +39,7 @@ typedef struct {
     list_t *order;
     list_t *operatorPrecedence; // associative array
     list_t *toDoStack;
+    list_t *deleteStack;
     char *opResult;
 } seagate;
 
