@@ -383,10 +383,15 @@ int checkConstant(seagate *selfp, char *input) { // returns the best guess at a 
     return 0;
 }
 
-void recordRegFromNamespace(seagate *selfp) { // creates a register from the last added namespace
+void recordRegFromNamespace(seagate *selfp, int currentType, int varOrFunc) { // creates a register from the last added namespace
     seagate self = *selfp;
+    list_append(self.userNamespace, self.strData -> data[self.strPtr], 's'); // for lookups
+    list_append(self.namespace, self.strData -> data[self.strPtr], 's'); // input1
+    self.strPtr += 1; // skip input1
+    list_append(self.namespace, (unitype) currentType, 'i'); // add input1 type to namespaces
+    list_append(self.namespace, (unitype) varOrFunc, 'i'); // add '0' to indicate variable
     int len = self.namespace -> length;
-    list_append(self.registers, (unitype) self.namespace -> data[len - 3].s, 's');
+    list_append(self.registers, self.namespace -> data[len - 3], 's');
     int type = self.namespace -> data[len - 2].i;
     int size = 0; // size of register in bits
     if (type & 0x1)
@@ -594,6 +599,10 @@ int packageExpression(seagate *selfp) {
             if (self.subsect -> data[step].r -> length == 2 && self.subsect -> data[step].r -> data[0].c == '+' && self.subsect -> data[step].r -> data[1].c == '+') {
                 if (step == 0) {
                     printf("hit prefix ++ case\n");
+                    if (list_count(self.userNamespace, self.subsect -> data[step + 1], 's') == 0) {
+                        printf("Syntax Error (%d): cannot increment %s\n", index, self.subsect -> data[step + 1].s);
+                        return -1;
+                    }
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 11);
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), self.registers -> length - 4, 0); // replaces the entire register with the temporary that is incremented by 1
                     list_delete(self.subsect -> data[step].r, 0);
@@ -601,6 +610,10 @@ int packageExpression(seagate *selfp) {
                 } else {
                     if (step == self.subsect -> length - 1) {
                         printf("hit posfix ++ case\n");
+                        if (list_count(self.userNamespace, self.subsect -> data[step - 1], 's') == 0) {
+                            printf("Syntax Error (%d): cannot increment %s\n", index, self.subsect -> data[step - 1].s);
+                            return -1;
+                        }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 11); // creates a copy with the INC suffix
                         list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to increment this by one after the expression is evaluated
                         // self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
@@ -618,12 +631,20 @@ int packageExpression(seagate *selfp) {
             }
             if (self.subsect -> data[step].r -> length == 2 && self.subsect -> data[step].r -> data[0].c == '-' && self.subsect -> data[step].r -> data[1].c == '-') {
                 if (step == 0) {
+                    if (list_count(self.userNamespace, self.subsect -> data[step + 1], 's') == 0) {
+                        printf("Syntax Error (%d): cannot decrement %s\n", index, self.subsect -> data[step + 1].s);
+                        return -1;
+                    }
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 12);
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), self.registers -> length - 4, 0); // replaces the entire register with the temporary that is decremented by 1
                     list_delete(self.subsect -> data[step].r, 0);
                     list_delete(self.subsect -> data[step].r, 0);
                 } else {
                     if (step == self.subsect -> length - 1) {
+                        if (list_count(self.userNamespace, self.subsect -> data[step - 1], 's') == 0) {
+                            printf("Syntax Error (%d): cannot decrement %s\n", index, self.subsect -> data[step - 1].s);
+                            return -1;
+                        }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 12); // creates a copy with the DEC suffix
                         list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to decrement this by one after the expression is evaluated
                         // self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
@@ -708,6 +729,10 @@ int packageExpression(seagate *selfp) {
                         printf("Syntax error at word %d\n", index);
                         return -1;
                     } else {
+                        if (list_count(self.userNamespace, self.subsect -> data[step - 1], 's') == 0) {
+                            printf("Syntax Error (%d): cannot increment %s\n", index, self.subsect -> data[step - 1].s);
+                            return -1;
+                        }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 11); // creates a copy with the INC suffix
                         list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to increment this by one after the expression is evaluated
                         self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
@@ -722,6 +747,10 @@ int packageExpression(seagate *selfp) {
                         printf("Syntax error at word %d\n", index);
                         return -1;
                     } else {
+                        if (list_count(self.userNamespace, self.subsect -> data[step - 1], 's') == 0) {
+                            printf("Syntax Error (%d): cannot decrement %s\n", index, self.subsect -> data[step - 1].s);
+                            return -1;
+                        }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 12); // creates a copy with the DEC suffix
                         list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to increment this by one after the expression is evaluated
                         self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
@@ -736,6 +765,10 @@ int packageExpression(seagate *selfp) {
                         printf("Syntax error at word %d\n", index);
                         return -1;
                     } else {
+                        if (list_count(self.userNamespace, self.subsect -> data[step + 1], 's') == 0) {
+                            printf("Syntax Error (%d): cannot increment %s\n", index, self.subsect -> data[step + 1].s);
+                            return -1;
+                        }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 11);
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), self.registers -> length - 4, 0);
                         list_delete(self.subsect -> data[step].r, 0);
@@ -747,6 +780,10 @@ int packageExpression(seagate *selfp) {
                         printf("Syntax error at word %d\n", index);
                         return -1;
                     } else {
+                        if (list_count(self.userNamespace, self.subsect -> data[step + 1], 's') == 0) {
+                            printf("Syntax Error (%d): cannot decrement %s\n", index, self.subsect -> data[step + 1].s);
+                            return -1;
+                        }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 12);
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), self.registers -> length - 4, 0);
                         list_delete(self.subsect -> data[step].r, 0);
@@ -913,6 +950,7 @@ int main(int argc, char *argv[]) {
     self.keywords = list_init();
     self.registers = list_init();
     self.namespace = list_init(); // name (string), followed by type indicator (integer), followed by 0 - variable, 1 - function
+    self.userNamespace = list_init();
     loadKeywords(&self);
     if (argc == 1) {
         printf("using file \"seagateFunction.c\"\n");
@@ -1044,11 +1082,9 @@ int main(int argc, char *argv[]) {
     self.strPtr = 0;
     self.typeSize = 0;
     int currentType = checkType(&self);
-    list_append(self.namespace, self.strData -> data[self.strPtr], 's'); // add seagate to namespaces
-    self.strPtr += 1; // skip seagate
-    list_append(self.namespace, (unitype) currentType, 'i'); // add seagate type to namespaces
-    list_append(self.namespace, (unitype) 1, 'i'); // add '1' to indicate function
-    recordRegFromNamespace(&self);
+    printf("record\n");
+    recordRegFromNamespace(&self, currentType, 1);
+    printf("recorded\n");
     char synDiv = checkSyntax(&self, self.strPtr, 1);
     currentType = checkType(&self);
     if (self.namespace -> data[1].i == 0 || currentType == 0 || synDiv != '(' || 
@@ -1056,11 +1092,7 @@ int main(int argc, char *argv[]) {
         printf("Error: file must start with \"{type} seagate({type} {string1})\"\n");
         return -1;
     }
-    list_append(self.namespace, self.strData -> data[self.strPtr], 's'); // input1
-    self.strPtr += 1; // skip input1
-    list_append(self.namespace, (unitype) currentType, 'i'); // add input1 type to namespaces
-    list_append(self.namespace, (unitype) 0, 'i'); // add '0' to indicate variable
-    recordRegFromNamespace(&self);
+    recordRegFromNamespace(&self, currentType, 0);
 
     while (checkSyntax(&self, self.strPtr, 1) == ',' && checkSyntax(&self, self.strPtr, 2) == 0) { // function has extra parameters
         currentType = checkType(&self);
@@ -1068,11 +1100,7 @@ int main(int argc, char *argv[]) {
             printf("invalid syntax at word %d\n", self.strPtr);
             return -1;
         }
-        list_append(self.namespace, self.strData -> data[self.strPtr], 's'); // inputX
-        self.strPtr += 1; // skip inputX
-        list_append(self.namespace, (unitype) currentType, 'i'); // add inputX type to namespaces
-        list_append(self.namespace, (unitype) 0, 'i'); // add '0' to indicate variable
-        recordRegFromNamespace(&self);
+        recordRegFromNamespace(&self, currentType, 0);
     }
     if (checkSyntax(&self, self.strPtr, 1) != ')' || checkSyntax(&self, self.strPtr, 2) != '{' || checkSyntax(&self, self.strPtr, 3) != 0) { // function definition end
         printf("invalid syntax at word %d\n", self.strPtr);
@@ -1124,11 +1152,7 @@ int main(int argc, char *argv[]) {
         int strPtrSaved = self.strPtr; // tempsave the strPtr so we can checkType
         currentType = checkType(&self);
         if (currentType != 0) { // new register
-            list_append(self.namespace, self.strData -> data[self.strPtr], 's'); // inputX
-            self.strPtr += 1; // skip inputX
-            list_append(self.namespace, (unitype) currentType, 'i'); // add inputX type to namespaces
-            list_append(self.namespace, (unitype) 0, 'i'); // add '0' to indicate variable
-            recordRegFromNamespace(&self);
+            recordRegFromNamespace(&self, currentType, 0);
             printf("syntaxic: ");
             list_print(self.syntaxic);
             int updateReg = self.registers -> length - 4; // this register represents the new variable we've just created
@@ -1156,11 +1180,7 @@ int main(int argc, char *argv[]) {
                 char *redefine = malloc(strlen(self.strData -> data[self.strPtr].s) + 4);
                 memcpy(redefine, self.strData -> data[self.strPtr].s, strlen(self.strData -> data[self.strPtr].s));
                 memcpy(redefine + strlen(self.strData -> data[self.strPtr].s), "REF", 4);
-                list_append(self.namespace, (unitype) redefine, 's'); // inputX
-                self.strPtr += 1; // skip inputX
-                list_append(self.namespace, (unitype) currentType, 'i'); // add inputX type to namespaces
-                list_append(self.namespace, (unitype) 0, 'i'); // add '0' to indicate variable
-                recordRegFromNamespace(&self);
+                recordRegFromNamespace(&self, currentType, 0);
                 printf("syntaxic: ");
                 list_print(self.syntaxic);
                 int updateReg = self.registers -> length - 4; // this register represents the new variable we've just created

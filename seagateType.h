@@ -19,6 +19,7 @@ typedef struct {
     list_t *keywords; // all keywords in C
     list_t *registers; // register spec: 4 items per register, it goes name (string), size in bits (int), size of references (how far above this the references extend) (int), list of component handles (list_t *)
     list_t *namespace; // spec: 3 items per namespace, name, type, 0 for variable, 1 for function
+    list_t *userNamespace; // this one only contains string names, is used to keep track of what registers can be incremented, assigned, etc, you cannot assign a constant or intermediate register
 
     /* logicgates data emulator */
     list_t *components; // list of components (1 item for each component, a string with "POWER", "AND", etc), a component's "ID" or "Handle" is that component's index in this list
