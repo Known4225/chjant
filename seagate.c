@@ -1139,7 +1139,7 @@ int main(int argc, char *argv[]) {
                 if (packageExpression(&self) == -1) { // parse the expression
                     return -1;
                 }
-                self.strPtr += 1;
+                self.strPtr += 1; // don't know why this has to be done in this case but not the redefine one (?)
             }
             /* pipe the output into the updateReg */
             // printf("%d %d\n", updateReg, checkNamespace(&self, self.subsect -> data[0].s));
@@ -1169,6 +1169,7 @@ int main(int argc, char *argv[]) {
                 if (packageExpression(&self) == -1) { // parse the expression
                     return -1;
                 }
+                // no strPtr += 1 (???)
                 /* pipe the output into the updateReg */
                 recordPaddedReg(&self, updateReg, checkNamespace(&self, self.subsect -> data[0].s), 15);
                 /* reassign the oldReg to the new */
