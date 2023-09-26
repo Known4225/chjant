@@ -1138,38 +1138,47 @@ int main(int argc, char *argv[]) {
         self.strPtr = strPtrSaved;
         int oldReg = checkNamespace(&self, self.strData -> data[self.strPtr].s);
         if (oldReg != -1) { // reassignment of old register
-            currentType = self.namespace -> data[list_find(self.namespace, self.strData -> data[self.strPtr], 's') + 1].i;
-            char *redefine = malloc(strlen(self.strData -> data[self.strPtr].s) + 4);
-            memcpy(redefine, self.strData -> data[self.strPtr].s, strlen(self.strData -> data[self.strPtr].s));
-            memcpy(redefine + strlen(self.strData -> data[self.strPtr].s), "REF", 4);
-            list_append(self.namespace, (unitype) redefine, 's'); // inputX
-            self.strPtr += 1; // skip inputX
-            list_append(self.namespace, (unitype) currentType, 'i'); // add inputX type to namespaces
-            list_append(self.namespace, (unitype) 0, 'i'); // add '0' to indicate variable
-            recordRegFromNamespace(&self);
-            printf("syntaxic: ");
-            list_print(self.syntaxic);
-            int updateReg = self.registers -> length - 4; // this register represents the new variable we've just created
-            printf("(redefine) syntax at %d: %c\n", self.strPtr, checkSyntax(&self, self.strPtr, 1));
-            if (checkSyntax(&self, self.strPtr, 1) == '=') {
-                printf("assigning %s\n", self.namespace -> data[self.namespace -> length - 3].s);
+            printf("(redefine) syntax at %d: %c\n", self.strPtr + 1, checkSyntax(&self, self.strPtr + 1, 1));
+            if (checkSyntax(&self, self.strPtr + 1, 1) == '=') { // case: assignment
+                currentType = self.namespace -> data[list_find(self.namespace, self.strData -> data[self.strPtr], 's') + 1].i;
+                char *redefine = malloc(strlen(self.strData -> data[self.strPtr].s) + 4);
+                memcpy(redefine, self.strData -> data[self.strPtr].s, strlen(self.strData -> data[self.strPtr].s));
+                memcpy(redefine + strlen(self.strData -> data[self.strPtr].s), "REF", 4);
+                list_append(self.namespace, (unitype) redefine, 's'); // inputX
+                self.strPtr += 1; // skip inputX
+                list_append(self.namespace, (unitype) currentType, 'i'); // add inputX type to namespaces
+                list_append(self.namespace, (unitype) 0, 'i'); // add '0' to indicate variable
+                recordRegFromNamespace(&self);
+                printf("syntaxic: ");
+                list_print(self.syntaxic);
+                int updateReg = self.registers -> length - 4; // this register represents the new variable we've just created
+                printf("assigning %s\n", self.strData -> data[self.strPtr - 1].s);
                 setSyntax(&self, self.strPtr, 1, ' ');
                 if (packageExpression(&self) == -1) { // parse the expression
                     return -1;
                 }
+                /* pipe the output into the updateReg */
+                recordPaddedReg(&self, updateReg, checkNamespace(&self, self.subsect -> data[0].s), 15);
+                /* reassign the oldReg to the new */
+                recordPaddedReg(&self, oldReg, checkNamespace(&self, self.subsect -> data[0].s), 0);
             }
-            
-            /* pipe the output into the updateReg */
-            recordPaddedReg(&self, updateReg, checkNamespace(&self, self.subsect -> data[0].s), 15);
-            /* reassign the oldReg to the new */
-            recordPaddedReg(&self, oldReg, checkNamespace(&self, self.subsect -> data[0].s), 0);
+            if (checkSyntax(&self, self.strPtr + 1, 1) == '+' && checkSyntax(&self, self.strPtr + 1, 2) == '+' && checkSyntax(&self, self.strPtr + 1, 3) == ';') { // case: increment
+                self.strPtr += 1; // skip inputX
+                printf("incrementing %s\n", self.strData -> data[self.strPtr - 1].s);
+                recordPaddedReg(&self, oldReg, 0, 11);
+                /* reassign the oldReg to the new */
+                printf("%d %d\n", oldReg, self.registers -> length - 4);
+                recordPaddedReg(&self, oldReg, self.registers -> length - 4, 0);
+                printf("%s\n", self.strData -> data[self.strPtr].s);
+                self.strPtr += 1;
+            }
         } else {
 
         }
         }
 
         }
-        self.strPtr -= 1;
+        self.strPtr -= 1; // why is this done????
     }
 
     /* Eventually we also have to make registers for all of the namespaces:

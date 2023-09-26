@@ -570,14 +570,14 @@ void copySelected(logicgates *selfp) { // copies and pastes selected components
         list_append(self.io, (unitype) 0, 'i');
         list_append(self.inpComp, self.inpComp -> data[self.selected -> data[i].i * 3 - 2], 'i');
         if (list_count(self.selected, self.inpComp -> data[self.selected -> data[i].i * 3 - 1], 'i') > 0) {
-            list_append(self.inpComp, (unitype) (l + self.inpComp -> data[self.selected -> data[i].i * 3 - 1].i), 'i');
-            if (list_count(self.inpComp, self.inpComp -> data[self.selected -> data[i].i * 3], 'i') > 0)
-                list_append(self.inpComp, (unitype) (l + self.inpComp -> data[self.selected -> data[i].i * 3].i), 'i');
+            list_append(self.inpComp, (unitype) (l + (self.selected -> data[1].i + list_find(self.selected, self.inpComp -> data[self.selected -> data[i].i * 3 - 1], 'i') - 1)), 'i');
+            if (list_count(self.selected, self.inpComp -> data[self.selected -> data[i].i * 3], 'i') > 0)
+                list_append(self.inpComp, (unitype) (l + (self.selected -> data[1].i + list_find(self.selected, self.inpComp -> data[self.selected -> data[i].i * 3], 'i') - 1)), 'i');
             else
                 list_append(self.inpComp, (unitype) 0, 'i');
         } else {
             if (list_count(self.selected, self.inpComp -> data[self.selected -> data[i].i * 3], 'i') > 0)
-                list_append(self.inpComp, (unitype) (l + self.inpComp -> data[self.selected -> data[i].i * 3].i), 'i');
+                list_append(self.inpComp, (unitype) (l + (self.selected -> data[1].i + list_find(self.selected, self.inpComp -> data[self.selected -> data[i].i * 3], 'i') - 1)), 'i');
             else
                 list_append(self.inpComp, (unitype) 0, 'i');
             list_append(self.inpComp, (unitype) 0, 'i');
