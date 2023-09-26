@@ -97,6 +97,7 @@ void loadKeywords(seagate *selfp) { // most of these are not useful for this par
     self.quantities = list_init();
     self.subsect = list_init();
     self.order = list_init();
+    self.toDoStack = list_init();
 
     /* operation codes:
     0 - rename register (reference1 becomes reference2, assignment)
@@ -465,10 +466,8 @@ int packageExpression(seagate *selfp) {
     // list_copy(self.quantities, self.subsect);
 
     /* routine: break into subsection */
-    list_t *toDoStack = list_init(); // represents a list of instructions to perform after the expression has been evaluated
+    list_clear(self.toDoStack); // represents a list of instructions to perform after the expression has been evaluated
     while (self.quantities -> length > 0) {
-    printf("quantities: ");
-    list_print(self.quantities);
     list_clear(self.subsect);
     int throw13 = 0;
     int throw14 = 0;
@@ -526,10 +525,8 @@ int packageExpression(seagate *selfp) {
     } else {
         list_free(leftover);
     }
-    // printf("quan: ");
-    // list_print(self.quantities);
-    // printf("subsect: ");
-    // list_print(self.subsect);
+    printf("subsect: ");
+    list_print(self.subsect);
 
     /* first pass: namespace checking and initialise constants */
     for (int j = 0; j < self.subsect -> length; j++) {
@@ -590,20 +587,26 @@ int packageExpression(seagate *selfp) {
     step = 0;
     while (step < self.subsect -> length) {
         if (self.subsect -> type[step] == 'r') {
+            printf("parsing: ");
+            list_print(self.subsect -> data[step].r);
             if (self.subsect -> data[step].r -> length == 2 && self.subsect -> data[step].r -> data[0].c == '+' && self.subsect -> data[step].r -> data[1].c == '+') {
                 if (step == 0) {
-                    printf("hit ++ case1\n");
+                    printf("hit prefix ++ case\n");
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 11);
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), self.registers -> length - 4, 0); // replaces the entire register with the temporary that is incremented by 1
                     list_delete(self.subsect -> data[step].r, 0);
                     list_delete(self.subsect -> data[step].r, 0);
                 } else {
                     if (step == self.subsect -> length - 1) {
+                        printf("hit posfix ++ case\n");
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 11); // creates a copy with the INC suffix
-                        list_append(toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to increment this by one after the expression is evaluated
-                        self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
-                        memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "INC", 4); // replaces the copy in the working version with the temporary that is incremented
-                        list_append(toDoStack, self.subsect -> data[step - 1], 's'); // note part 2
+                        list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to increment this by one after the expression is evaluated
+                        // self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
+                        // memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "INC", 4); // replaces the copy in the working version with the temporary that is incremented (apparently this is not how C works)
+                        char *renamedString = malloc(strlen(self.subsect -> data[step - 1].s) + 4);
+                        memcpy(renamedString, self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s));
+                        memcpy(renamedString + strlen(self.subsect -> data[step - 1].s), "INC", 4);
+                        list_append(self.toDoStack, (unitype) renamedString, 's'); // note part 2
                         list_delete(self.subsect -> data[step].r, 0);
                         list_delete(self.subsect -> data[step].r, 0);
                     } else {
@@ -614,16 +617,19 @@ int packageExpression(seagate *selfp) {
             if (self.subsect -> data[step].r -> length == 2 && self.subsect -> data[step].r -> data[0].c == '-' && self.subsect -> data[step].r -> data[1].c == '-') {
                 if (step == 0) {
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 12);
-                    recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), self.registers -> length - 4, 0); // replaces the entire register with the temporary that is deccremented by 1
+                    recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), self.registers -> length - 4, 0); // replaces the entire register with the temporary that is decremented by 1
                     list_delete(self.subsect -> data[step].r, 0);
                     list_delete(self.subsect -> data[step].r, 0);
                 } else {
                     if (step == self.subsect -> length - 1) {
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 12); // creates a copy with the DEC suffix
-                        list_append(toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to decrement this by one after the expression is evaluated
-                        self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
-                        memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "DEC", 4); // replaces the copy in the working version with the temporary that is decremented
-                        list_append(toDoStack, self.subsect -> data[step - 1], 's'); // note part 2
+                        list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to decrement this by one after the expression is evaluated
+                        // self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
+                        // memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "DEC", 4); // replaces the copy in the working version with the temporary that is decremented (apparently this is not how C works)
+                        char *renamedString = malloc(strlen(self.subsect -> data[step - 1].s) + 4);
+                        memcpy(renamedString, self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s));
+                        memcpy(renamedString + strlen(self.subsect -> data[step - 1].s), "DEC", 4);
+                        list_append(self.toDoStack, (unitype) renamedString, 's'); // note part 2
                         list_delete(self.subsect -> data[step].r, 0);
                         list_delete(self.subsect -> data[step].r, 0);
                     } else {
@@ -701,10 +707,10 @@ int packageExpression(seagate *selfp) {
                         return -1;
                     } else {
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 11); // creates a copy with the INC suffix
-                        list_append(toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to increment this by one after the expression is evaluated
+                        list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to increment this by one after the expression is evaluated
                         self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
                         memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "INC", 4); // replaces the copy in the working version with the temporary that is incremented by 1
-                        list_append(toDoStack, self.subsect -> data[step - 1], 's'); // note part 2
+                        list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // note part 2
                         list_delete(self.subsect -> data[step].r, 0);
                         list_delete(self.subsect -> data[step].r, 0);
                     }
@@ -715,10 +721,10 @@ int packageExpression(seagate *selfp) {
                         return -1;
                     } else {
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 12); // creates a copy with the DEC suffix
-                        list_append(toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to increment this by one after the expression is evaluated
+                        list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to increment this by one after the expression is evaluated
                         self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
                         memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "DEC", 4); // replaces the copy in the working version with the temporary that is decremented by 1
-                        list_append(toDoStack, self.subsect -> data[step - 1], 's'); // note part 2
+                        list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // note part 2
                         list_delete(self.subsect -> data[step].r, 0);
                         list_delete(self.subsect -> data[step].r, 0);
                     }
@@ -787,8 +793,8 @@ int packageExpression(seagate *selfp) {
                 }
                 if (self.subsect -> data[step].r -> data[self.subsect -> data[step].r -> length - 1].c == '=') {
                     if (self.subsect -> data[step].r -> length == 1 || (self.subsect -> data[step].r -> data[self.subsect -> data[step].r -> length - 2].c != '=' && self.subsect -> data[step].r -> data[self.subsect -> data[step].r -> length - 2].c != '!')) {
-                        list_append(toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to assign after expression is evaluated
-                        list_append(toDoStack, (unitype) "TODO", 's'); // marker to fill when evaluating operator
+                        list_append(self.toDoStack, self.subsect -> data[step - 1], 's'); // makes a note to assign after expression is evaluated
+                        list_append(self.toDoStack, (unitype) "TODO", 's'); // marker to fill when evaluating operator
                         list_delete(self.subsect -> data[step].r, self.subsect -> data[step].r -> length - 1); // delete the = sign
                     }
                 }
@@ -872,9 +878,17 @@ int packageExpression(seagate *selfp) {
         }
         if (self.quantities -> length == 1) { // exit if length is 1
             break;
+    } else {
+    if (self.quantities -> length == 2) {
+        if (self.subsect -> length == 1) {
+            list_clear(self.quantities);
+            list_copy(self.subsect, self.quantities);
+        } else {
+            printf("Syntax error: something bad happened\n");
+            return -1;
         }
-        // printf("registers: ");
-        // list_print(self.registers);
+    }
+    }
     }
     printf("subsect: ");
     list_print(self.subsect);
@@ -885,11 +899,6 @@ int packageExpression(seagate *selfp) {
     /* there might be issues with ++ because of this, but at this point I do not care and just want to see some results */
 
     printf("completed expression\n");
-    /* assign via the toDoStack */
-    for (int i = toDoStack -> length - 2; i > -1; i += 2) {
-        recordPaddedReg(&self, checkNamespace(&self, toDoStack -> data[i].s), checkNamespace(&self, toDoStack -> data[i + 1].s), 0);
-    }
-    list_free(toDoStack);
     *selfp = self;
     return 0;
 }
@@ -1152,7 +1161,7 @@ int main(int argc, char *argv[]) {
                 printf("syntaxic: ");
                 list_print(self.syntaxic);
                 int updateReg = self.registers -> length - 4; // this register represents the new variable we've just created
-                printf("assigning %s\n", self.strData -> data[self.strPtr - 1].s);
+                printf("reassigning %s\n", self.strData -> data[self.strPtr - 1].s);
                 setSyntax(&self, self.strPtr, 1, ' ');
                 if (packageExpression(&self) == -1) { // parse the expression
                     return -1;
@@ -1161,11 +1170,27 @@ int main(int argc, char *argv[]) {
                 recordPaddedReg(&self, updateReg, checkNamespace(&self, self.subsect -> data[0].s), 15);
                 /* reassign the oldReg to the new */
                 recordPaddedReg(&self, oldReg, checkNamespace(&self, self.subsect -> data[0].s), 0);
+
+                /* assign via the toDoStack */
+                for (int i = self.toDoStack -> length - 2; i > -1; i -= 2) {
+                    printf("assigning %s (%d) to %s (%d) \n", self.toDoStack -> data[i].s, checkNamespace(&self, self.toDoStack -> data[i].s), self.toDoStack -> data[i + 1].s, checkNamespace(&self, self.toDoStack -> data[i + 1].s));
+                    recordPaddedReg(&self, checkNamespace(&self, self.toDoStack -> data[i].s), checkNamespace(&self, self.toDoStack -> data[i + 1].s), 0);
+                }
             }
             if (checkSyntax(&self, self.strPtr + 1, 1) == '+' && checkSyntax(&self, self.strPtr + 1, 2) == '+' && checkSyntax(&self, self.strPtr + 1, 3) == ';') { // case: increment
                 self.strPtr += 1; // skip inputX
                 printf("incrementing %s\n", self.strData -> data[self.strPtr - 1].s);
                 recordPaddedReg(&self, oldReg, 0, 11);
+                /* reassign the oldReg to the new */
+                printf("%d %d\n", oldReg, self.registers -> length - 4);
+                recordPaddedReg(&self, oldReg, self.registers -> length - 4, 0);
+                printf("%s\n", self.strData -> data[self.strPtr].s);
+                self.strPtr += 1;
+            }
+            if (checkSyntax(&self, self.strPtr + 1, 1) == '-' && checkSyntax(&self, self.strPtr + 1, 2) == '-' && checkSyntax(&self, self.strPtr + 1, 3) == ';') { // case: increment
+                self.strPtr += 1; // skip inputX
+                printf("decrementing %s\n", self.strData -> data[self.strPtr - 1].s);
+                recordPaddedReg(&self, oldReg, 0, 12);
                 /* reassign the oldReg to the new */
                 printf("%d %d\n", oldReg, self.registers -> length - 4);
                 recordPaddedReg(&self, oldReg, self.registers -> length - 4, 0);
