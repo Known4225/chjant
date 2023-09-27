@@ -91,6 +91,8 @@ void* list_item(list_t *list, int index); // accesses an item of the list as a v
 
 void list_append(list_t *list, unitype data, char type); // append to list, must specify type
 
+void list_insert(list_t *list, int index, unitype data, char type); // insert in list. Appends to the end if index exceeds the length, inserts to front if index is negative
+
 void list_clear(list_t *list);
 
 unitype list_pop(list_t *list); // pops the last item of the list off and returns it

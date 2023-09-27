@@ -68,6 +68,28 @@ void list_append(list_t *list, unitype data, char type) { // append to list, mus
     list -> length += 1;
 }
 
+void list_insert(list_t *list, int index, unitype data, char type) { // insert in list. Appends to the end if index exceeds the length, inserts to front if index is negative
+    if (list -> length == 0 || index >= list -> length) { // append to back
+        list_append(list, data, type);
+        return;
+    }
+    if (index < 1) { // append to front
+        index = 0;
+    }
+    /* insert */
+    list_append(list, (unitype) 0, 'i');
+    for (int i = list -> length - 2; i > index - 1; i--) {
+        unitype temp = list -> data[i + 1];
+        char tempT = list -> type[i + 1];
+        list -> data[i + 1] = list -> data[i];
+        list -> type[i + 1] = list -> type[i];
+        list -> data[i] = temp;
+        list -> type[i] = tempT;
+    }
+    list -> data[index] = data;
+    list -> type[index] = type;
+}
+
 void list_clear(list_t *list) {
     list_free_lite(list);
     list -> length = 0;
