@@ -171,6 +171,10 @@ void loadKeywords(seagate *selfp) { // most of these are not useful for this par
     list_append(self.operatorPrecedence, (unitype) "||", 's');
     list_append(self.operatorPrecedence, (unitype) 12, 'i');
     list_append(self.operatorPrecedence, (unitype) 7, 'i');
+
+    list_append(self.operatorPrecedence, (unitype) "=", 's'); // added this type of assignment to do last, returns the second register, also does a check, opCode 30
+    list_append(self.operatorPrecedence, (unitype) 13, 'i');
+    list_append(self.operatorPrecedence, (unitype) 30, 'i');
     *selfp = self;
 }
 
@@ -191,7 +195,6 @@ void exportGates(seagate *selfp, const char *filename) { // exports a logicgates
         fclose(file);
     *selfp = self;
 }
-
 
 void readString(seagate *selfp) { // parses pstr into strData and syntaxHighlight
     seagate self = *selfp;
@@ -238,6 +241,7 @@ int setSyntax(seagate *selfp, int position, int column, char toSet) { // haha, g
             keep += 1;
             if (keep == column) {
                 self.syntaxic -> data[i + 1].c = toSet;
+                *selfp = self;
                 return 0;
             }
         }
@@ -445,7 +449,7 @@ void recordRegFromNamespace(seagate *selfp, int currentType, int varOrFunc) { //
 
 extern void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operation); // prototype for this function which has its own file because life is suffering
 
-int packageExpression(seagate *selfp) {
+int packageExpression(seagate *selfp) { // the parsing
     seagate self = *selfp;
     int index = self.strPtr; // for errors
     list_clear(self.quantities);
@@ -474,72 +478,87 @@ int packageExpression(seagate *selfp) {
         self.strPtr += 1;
     }
     self.strPtr -= 1;
-    printf("strPtr: %s\n", self.strData -> data[self.strPtr].s);
-    printf("quantities (begin expression): ");
-    list_print(self.quantities);
+    // printf("strPtr (%d): %s\n", self.strPtr, self.strData -> data[self.strPtr].s);
+    // printf("quantities (begin expression): ");
+    // list_print(self.quantities);
     // list_copy(self.quantities, self.subsect);
 
     /* routine: break into subsection */
     list_clear(self.toDoStack); // represents a list of instructions to perform after the expression has been evaluated
     list_clear(self.deleteStack); // an expression essentially creates a stack frame of temporary registers that need to be deleted when they are finished, this list has both a string and an index in that order, the index is used to delete back-to-front, the string is for safety
     while (self.quantities -> length > 0) {
+    printf("quantities: ");
+    list_print(self.quantities);
     list_clear(self.subsect);
-    int throw13 = 0;
-    int throw14 = 0;
+    int secondPointer = 0;
+    int firstPointer = 0;
     char run = 1;
     list_t *leftover = list_init();
-    while (run && throw13 < self.quantities -> length) {
-        if (self.quantities -> type[throw13] == 'r') {
+    while (run) {
+        if (self.quantities -> type[secondPointer] == 'r') {
             list_t *paraList = list_init();
-            for (int i = 0; i < self.quantities -> data[throw13].r -> length; i++) {
-                if (self.quantities -> data[throw13].r -> data[i].c == ')') {
+            for (int i = 0; i < self.quantities -> data[secondPointer].r -> length; i++) {
+                if (self.quantities -> data[secondPointer].r -> data[i].c == ')') {
                     run = 0;
                     list_t *afterP = list_init();
-                    for (int j = i + 1; j < self.quantities -> data[throw13].r -> length; j++) {
-                        list_append(afterP, self.quantities -> data[throw13].r -> data[j], 'c');
+                    for (int j = i + 1; j < self.quantities -> data[secondPointer].r -> length; j++) {
+                        list_append(afterP, self.quantities -> data[secondPointer].r -> data[j], 'c');
                     }
                     if (afterP -> length == 0) {
-                        list_delete(self.quantities, throw13);
+                        list_delete(self.quantities, secondPointer);
                     } else {
-                        list_free(self.quantities -> data[throw13].r);
-                        self.quantities -> data[throw13].r = afterP;
+                        list_free(self.quantities -> data[secondPointer].r);
+                        self.quantities -> data[secondPointer].r = afterP;
                     }
+                    secondPointer -= 1;
                     break;
                 }
-                if (self.quantities -> data[throw13].r -> data[i].c == '(') {
-                    throw14 = throw13;
+                if (self.quantities -> data[secondPointer].r -> data[i].c == '(') {
+                    firstPointer = secondPointer + 1;
                     // printf("paraList: ");
                     // list_print(paraList);
                     list_clear(leftover);
                     for (int j = 0; j < i; j++) {
-                        list_append(leftover, self.quantities -> data[throw13].r -> data[j], 'c');
+                        list_append(leftover, self.quantities -> data[secondPointer].r -> data[j], 'c');
                     }
                     list_clear(self.subsect);
                     list_clear(paraList);
                 } else {
-                    list_append(paraList, self.quantities -> data[throw13].r -> data[i], 'c');
+                    list_append(paraList, self.quantities -> data[secondPointer].r -> data[i], 'c');
                 }
             }
             if (!run) {
-                throw13 += 1;
                 break;
             }
             if (paraList -> length != 0)
                 list_append(self.subsect, (unitype) paraList, 'r');
         } else {
-            list_append(self.subsect, (unitype) strdup(self.quantities -> data[throw13].s), 's');
+            list_append(self.subsect, (unitype) strdup(self.quantities -> data[secondPointer].s), 's');
         }
-        throw13 += 1;
+        secondPointer += 1;
+        if (secondPointer >= self.quantities -> length) {
+            if (firstPointer == 0) {
+                secondPointer -= 1;
+                if (self.quantities -> type[secondPointer] == 'r')
+                    secondPointer -= 1;
+                break;
+            }
+            printf("Syntax error: no matching ')' at word %d\n", index);
+            return -1;
+        }
     }
-    if (self.quantities -> type[throw14] == 'r') {
-        list_free(self.quantities -> data[throw14].r);
-        self.quantities -> data[throw14].r = leftover;
+    if (self.quantities -> type[firstPointer - 1] == 'r') {
+        list_free(self.quantities -> data[firstPointer - 1].r);
+        self.quantities -> data[firstPointer - 1].r = leftover;
         if (leftover -> length == 0) {
-            list_delete(self.quantities, throw14);
+            list_delete(self.quantities, firstPointer - 1);
+            firstPointer -= 1;
+            secondPointer -= 1;
         }
     } else {
         list_free(leftover);
     }
+    
     printf("subsect: ");
     list_print(self.subsect);
 
@@ -603,13 +622,13 @@ int packageExpression(seagate *selfp) {
     step = 0;
     while (step < self.subsect -> length) {
         if (self.subsect -> type[step] == 'r') {
-            printf("parsing: ");
-            list_print(self.subsect -> data[step].r);
+            // printf("parsing: ");
+            // list_print(self.subsect -> data[step].r);
             if (self.subsect -> data[step].r -> length == 2 && self.subsect -> data[step].r -> data[0].c == '+' && self.subsect -> data[step].r -> data[1].c == '+') {
                 if (step == 0) {
                     printf("hit prefix ++ case\n");
                     if (list_count(self.userNamespace, self.subsect -> data[step + 1], 's') == 0) {
-                        printf("Syntax Error (%d): cannot increment %s\n", index, self.subsect -> data[step + 1].s);
+                        printf("Syntax Error (%d): cannot increment %s: expression must be a modifiable lvalue\n", index, self.subsect -> data[step + 1].s);
                         return -1;
                     }
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 11);
@@ -620,7 +639,7 @@ int packageExpression(seagate *selfp) {
                     if (step == self.subsect -> length - 1) {
                         printf("hit posfix ++ case\n");
                         if (list_count(self.userNamespace, self.subsect -> data[step - 1], 's') == 0) {
-                            printf("Syntax Error (%d): cannot increment %s\n", index, self.subsect -> data[step - 1].s);
+                            printf("Syntax Error (%d): cannot increment %s: expression must be a modifiable lvalue\n", index, self.subsect -> data[step - 1].s);
                             return -1;
                         }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 11); // creates a copy with the INC suffix
@@ -641,7 +660,7 @@ int packageExpression(seagate *selfp) {
             if (self.subsect -> data[step].r -> length == 2 && self.subsect -> data[step].r -> data[0].c == '-' && self.subsect -> data[step].r -> data[1].c == '-') {
                 if (step == 0) {
                     if (list_count(self.userNamespace, self.subsect -> data[step + 1], 's') == 0) {
-                        printf("Syntax Error (%d): cannot decrement %s\n", index, self.subsect -> data[step + 1].s);
+                        printf("Syntax Error (%d): cannot decrement %s: expression must be a modifiable lvalue\n", index, self.subsect -> data[step + 1].s);
                         return -1;
                     }
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 12);
@@ -651,7 +670,7 @@ int packageExpression(seagate *selfp) {
                 } else {
                     if (step == self.subsect -> length - 1) {
                         if (list_count(self.userNamespace, self.subsect -> data[step - 1], 's') == 0) {
-                            printf("Syntax Error (%d): cannot decrement %s\n", index, self.subsect -> data[step - 1].s);
+                            printf("Syntax Error (%d): cannot decrement %s: expression must be a modifiable lvalue\n", index, self.subsect -> data[step - 1].s);
                             return -1;
                         }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 12); // creates a copy with the DEC suffix
@@ -739,13 +758,13 @@ int packageExpression(seagate *selfp) {
                         return -1;
                     } else {
                         if (list_count(self.userNamespace, self.subsect -> data[step - 1], 's') == 0) {
-                            printf("Syntax Error (%d): cannot increment %s\n", index, self.subsect -> data[step - 1].s);
+                            printf("Syntax Error (%d): cannot increment %s: expression must be a modifiable lvalue\n", index, self.subsect -> data[step - 1].s);
                             return -1;
                         }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 11); // creates a copy with the INC suffix
                         list_append(self.toDoStack, (unitype) strdup(self.subsect -> data[step - 1].s), 's'); // makes a note to increment this by one after the expression is evaluated
                         self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
-                        memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "INC", 4); // replaces the copy in the working version with the temporary that is incremented by 1
+                        // memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "INC", 4); // replaces the copy in the working version with the temporary that is incremented by 1
                         list_append(self.toDoStack, (unitype) strdup(self.subsect -> data[step - 1].s), 's'); // note part 2
                         list_delete(self.subsect -> data[step].r, 0);
                         list_delete(self.subsect -> data[step].r, 0);
@@ -757,13 +776,13 @@ int packageExpression(seagate *selfp) {
                         return -1;
                     } else {
                         if (list_count(self.userNamespace, self.subsect -> data[step - 1], 's') == 0) {
-                            printf("Syntax Error (%d): cannot decrement %s\n", index, self.subsect -> data[step - 1].s);
+                            printf("Syntax Error (%d): cannot decrement %s: expression must be a modifiable lvalue\n", index, self.subsect -> data[step - 1].s);
                             return -1;
                         }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step - 1].s), 0, 12); // creates a copy with the DEC suffix
                         list_append(self.toDoStack, (unitype) strdup(self.subsect -> data[step - 1].s), 's'); // makes a note to increment this by one after the expression is evaluated
                         self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step - 1].s, strlen(self.subsect -> data[step - 1].s + 4));
-                        memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "DEC", 4); // replaces the copy in the working version with the temporary that is decremented by 1
+                        // memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step - 1].s), "DEC", 4); // replaces the copy in the working version with the temporary that is decremented by 1
                         list_append(self.toDoStack, (unitype) strdup(self.subsect -> data[step - 1].s), 's'); // note part 2
                         list_delete(self.subsect -> data[step].r, 0);
                         list_delete(self.subsect -> data[step].r, 0);
@@ -775,7 +794,7 @@ int packageExpression(seagate *selfp) {
                         return -1;
                     } else {
                         if (list_count(self.userNamespace, self.subsect -> data[step + 1], 's') == 0) {
-                            printf("Syntax Error (%d): cannot increment %s\n", index, self.subsect -> data[step + 1].s);
+                            printf("Syntax Error (%d): cannot increment %s: expression must be a modifiable lvalue\n", index, self.subsect -> data[step + 1].s);
                             return -1;
                         }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 11);
@@ -790,7 +809,7 @@ int packageExpression(seagate *selfp) {
                         return -1;
                     } else {
                         if (list_count(self.userNamespace, self.subsect -> data[step + 1], 's') == 0) {
-                            printf("Syntax Error (%d): cannot decrement %s\n", index, self.subsect -> data[step + 1].s);
+                            printf("Syntax Error (%d): cannot decrement %s: expression must be a modifiable lvalue\n", index, self.subsect -> data[step + 1].s);
                             return -1;
                         }
                         recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 12);
@@ -843,13 +862,14 @@ int packageExpression(seagate *selfp) {
                     if (self.subsect -> data[step].r -> length == 1 || (self.subsect -> data[step].r -> data[self.subsect -> data[step].r -> length - 2].c != '=' && self.subsect -> data[step].r -> data[self.subsect -> data[step].r -> length - 2].c != '!')) {
                         list_append(self.toDoStack, (unitype) strdup(self.subsect -> data[step - 1].s), 's'); // makes a note to assign after expression is evaluated
                         list_append(self.toDoStack, (unitype) "TODO", 's'); // marker to fill when evaluating operator
-                        list_delete(self.subsect -> data[step].r, self.subsect -> data[step].r -> length - 1); // delete the = sign
+                        // list_delete(self.subsect -> data[step].r, self.subsect -> data[step].r -> length - 1); // delete the = sign
                     }
                 }
             }
         }
         step += 1;
     }
+    // list_print(self.subsect);
 
     /* third pass: bodmas */
     /* by now the subsect list looks very similar to the one in the expression evaluator, it just has extra operations */
@@ -864,9 +884,9 @@ int packageExpression(seagate *selfp) {
     }
     int throw10;
     int throw11 = 3;
-    while (throw11 < 13) {
+    while (throw11 < 14) {
         throw10 = 0;
-        while (throw10 < self.subsect -> length) { // check for 3rd class operators
+        while (throw10 < self.subsect -> length) { // check for x class operators
             if (self.subsect -> type[throw10] == 'r' && associatedOperation(&self, self.subsect -> data[throw10].r, 1) == throw11) {
                 self.order -> data[throw10].i = throw11;
             }
@@ -876,12 +896,20 @@ int packageExpression(seagate *selfp) {
     }
     /* fourth pass: eval */
     int currentOrder = 3;
-    while (currentOrder < 13) {
+    while (currentOrder < 14) {
         if (list_count(self.order, (unitype) currentOrder, 'i')) {
             for (int i = 0; i < self.order -> length; i++) {
                 if (self.order -> data[i].i == currentOrder) {
                     int opCode = associatedOperation(&self, self.subsect -> data[i].r, 2);
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[i - 1].s), checkNamespace(&self, self.subsect -> data[i + 1].s), opCode);
+                    if (opCode == 30) { // special case: fill TODO
+                        int place = list_find(self.toDoStack, self.subsect -> data[i - 1], 's');
+                        if (place == -1) {
+                            printf("Syntax Error: Unsure assignment at word %d\n", index);
+                            return -1;
+                        }
+                        self.toDoStack -> data[place + 1].s = strdup(self.subsect -> data[i + 1].s);
+                    }
                     self.subsect -> data[i - 1].s = strdup(self.opResult); // replaces the copy in the working version with the result
                     
                     list_delete(self.subsect, i);
@@ -896,36 +924,16 @@ int packageExpression(seagate *selfp) {
         currentOrder += 1;
     }
     /* wrap up*/
-    printf("wrap up %d\n", throw13 - throw14 - 2);
-    printf("quantities before: ");
-    list_print(self.quantities);
+    // printf("quantities before: ");
+    // list_print(self.quantities);
     if (self.quantities -> length > 2) {
-        int modifier = 0;
-        int modifier2 = 0;
-        printf("throws: %d %d\n", throw14, throw13);
-        // printf("%c\n", self.quantities -> type[throw14 + 1]);
-        if (self.quantities -> type[throw14 + 1] == 's') {
-            modifier = 1;
+        // printf("firstPointer: %d secondPointer: %d\n", firstPointer, secondPointer);
+        for (int i = firstPointer + 1; i <= secondPointer; i++) {
+            list_delete(self.quantities, firstPointer);
         }
-        if (self.quantities -> type[throw13 - 1] == 'r') {
-            modifier2 = 1;
-        }
-        printf("modifiers: %d %d\n", modifier, modifier2);
-        if (throw13 - throw14 - 1 - modifier - modifier2 >= self.quantities -> length) {
-            list_clear(self.quantities);
-        } else {
-            for (int i = 0; i < throw13 - throw14 - 1 - modifier - modifier2; i++) {
-                list_delete(self.quantities, throw14 + 1 + modifier);
-            }
-            if (self.quantities -> length > throw14 + modifier) {
-                self.quantities -> data[throw14 + modifier] = (unitype) strdup(self.subsect -> data[0].s);
-            }
-        }
-        printf("quantities after : ");
-        list_print(self.quantities);
-        }
-        if (self.quantities -> length == 1) { // exit if length is 1
-            break;
+        self.quantities -> data[firstPointer].s = strdup(self.subsect -> data[0].s);
+        // printf("quantities after : ");
+        // list_print(self.quantities);
     } else {
     if (self.quantities -> length == 2) {
         if (self.subsect -> length == 1) {
@@ -935,6 +943,11 @@ int packageExpression(seagate *selfp) {
             printf("Syntax error: something bad happened\n");
             return -1;
         }
+    } else {
+    if (self.quantities -> length == 1) {
+        *selfp = self;
+        return 0;
+    }
     }
     }
     }
@@ -951,7 +964,7 @@ int packageExpression(seagate *selfp) {
     return 0;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) { // walks through the source code (line by line for the most part)
     seagate self;
     self.pstr = list_init();
     self.strData = list_init();
@@ -1170,6 +1183,7 @@ int main(int argc, char *argv[]) {
             break;
         } else {
         int strPtrSaved = self.strPtr; // tempsave the strPtr so we can checkType
+        printf("checking %s at word %d\n", self.strData -> data[self.strPtr].s, self.strPtr);
         currentType = checkType(&self);
         if (currentType != 0) { // new register
             recordRegFromNamespace(&self, currentType, 0);
@@ -1183,7 +1197,6 @@ int main(int argc, char *argv[]) {
                 if (packageExpression(&self) == -1) { // parse the expression
                     return -1;
                 }
-                self.strPtr += 1; // don't know why this has to be done in this case but not the redefine one (?)
             }
             /* pipe the output into the updateReg */
             recordPaddedReg(&self, updateReg, checkNamespace(&self, self.subsect -> data[0].s), 15);
@@ -1198,7 +1211,6 @@ int main(int argc, char *argv[]) {
                     list_delete(self.registers, self.deleteStack -> data[i].i);
                 }
             }
-
             
         } else {
         self.strPtr = strPtrSaved;
@@ -1219,7 +1231,6 @@ int main(int argc, char *argv[]) {
                 if (packageExpression(&self) == -1) { // parse the expression
                     return -1;
                 }
-                // no strPtr += 1 (???)
                 /* pipe the output into the updateReg */
                 recordPaddedReg(&self, updateReg, checkNamespace(&self, self.subsect -> data[0].s), 15);
                 /* reassign the oldReg to the new */
@@ -1245,7 +1256,6 @@ int main(int argc, char *argv[]) {
                 printf("%d %d\n", oldReg, self.registers -> length - 4);
                 recordPaddedReg(&self, oldReg, self.registers -> length - 4, 0);
                 printf("%s\n", self.strData -> data[self.strPtr].s);
-                self.strPtr += 1;
             }
             if (checkSyntax(&self, self.strPtr + 1, 1) == '-' && checkSyntax(&self, self.strPtr + 1, 2) == '-' && checkSyntax(&self, self.strPtr + 1, 3) == ';') { // case: increment
                 self.strPtr += 1; // skip inputX
@@ -1255,15 +1265,13 @@ int main(int argc, char *argv[]) {
                 printf("%d %d\n", oldReg, self.registers -> length - 4);
                 recordPaddedReg(&self, oldReg, self.registers -> length - 4, 0);
                 printf("%s\n", self.strData -> data[self.strPtr].s);
-                self.strPtr += 1;
             }
         } else {
-
+            printf("Unidentified symbol %s at word %d\n", self.strData -> data[self.strPtr].s, self.strPtr);
         }
         }
 
         }
-        self.strPtr -= 1; // why is this done????
     }
 
     /* Eventually we also have to make registers for all of the namespaces:

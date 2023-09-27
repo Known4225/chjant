@@ -55,6 +55,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     23 - multiply ~
     24 - divide ~
     25 - modulo ~
+
+    30 - equals (=), returns register2, checks if register1 is a modifiable lvalue (calls exit() if it isn't)
     */
     /* temporary copy constructor if the register is operated on itself */
     if (reference1 == reference2) { // this doesn't check if it's an operation on two registers, but it shouldn't matter
@@ -1241,6 +1243,13 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
 
     case 25: ; // modulo, probably as difficult or slightly easier than dividing
     break;
+
+    case 30: ; // equals (=)
+    if (list_count(self.userNamespace, (unitype) ref1name, 's') == 0) {
+        printf("Syntax error: %s must be a modifiable lvalue\n", ref1name);
+        exit(-1);
+    }
+    self.opResult = ref2name; // literally this is all
     }
     list_free(wireTemp);
     *selfp = self;
