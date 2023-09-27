@@ -713,9 +713,10 @@ int packageExpression(seagate *selfp) { // the parsing
             }
             if (self.subsect -> data[step].r -> length == 1 && self.subsect -> data[step].r -> data[0].c == '-') {
                 if (step == 0) {
+                    printf("negating %s\n", self.subsect -> data[step + 1].s);
                     recordPaddedReg(&self, checkNamespace(&self, self.subsect -> data[step + 1].s), 0, 13); // creates a copy with the NEG suffix
-                    self.subsect -> data[step - 1].s = realloc(self.subsect -> data[step + 1].s, strlen(self.subsect -> data[step - 1].s + 4));
-                    memcpy(self.subsect -> data[step - 1].s + strlen(self.subsect -> data[step + 1].s), "NEG", 4); // replaces the copy in the working version with the temporary that is negated
+                    self.subsect -> data[step + 1].s = realloc(self.subsect -> data[step + 1].s, strlen(self.subsect -> data[step + 1].s + 4));
+                    memcpy(self.subsect -> data[step + 1].s + strlen(self.subsect -> data[step + 1].s), "NEG", 4); // replaces the copy in the working version with the temporary that is negated
                     list_delete(self.subsect -> data[step].r, 0);
                 }
             }

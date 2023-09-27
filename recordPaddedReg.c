@@ -100,7 +100,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     }
     list_t *wireTemp = list_init();
 
-    switch (operation) {
+    switch (operation) { // it's THE switch statement
     case 0: ; // assignment/copying
     if (size1 != size2) {
         printf("Warning: bit mismatch assigning %s (%d bits) to %s (%d bits)\n", self.registers -> data[reference1].s, self.registers -> data[reference1 + 1].i, self.registers -> data[reference2].s, self.registers -> data[reference2 + 1].i);
@@ -966,7 +966,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
             if (i == 0)
                 list_append(self.inpComp, (unitype) 0, 'i');
             else
-                list_append(self.inpComp, (unitype) (unitype) (int) (self.components -> length - 3), 'i'); // add input from previous CARRY
+                list_append(self.inpComp, (unitype) (unitype) (int) (self.components -> length - 4), 'i'); // add input from previous CARRY
 
             /* add wiring from reference register, in this case it's a 1 to 1 bit to bit */
             list_append(self.wiring, (unitype) (int) (self.components -> length - 2), 'i');
@@ -1009,6 +1009,135 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
 
 
     case 13: ; // negator - made with a decrementor and a NOT of the output (two's complement, does not typecheck for signed quality)
+    /* it's just like decrementing but with an extra NOT */
+    self.registers -> data[reference1 + 2].i += 1;
+    newName = malloc(strlen(ref1name) + 4);
+    memcpy(newName, ref1name, strlen(ref1name)); // create a new register called {reference1.name}NEG
+    memcpy(newName + strlen(ref1name), "NEG", 4);
+    list_append(self.registers, (unitype) newName, 's');
+    self.opResult = newName;
+    list_append(self.registers, (unitype) size1, 'i');
+    list_append(self.registers, (unitype) 1, 'i'); // need height raised by default, this can get messy
+    list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
+    list_append(self.deleteStack, (unitype) strdup(newName), 's');
+    list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
+    for (int i = 0; i < size1; i++) {
+        /* XOR gates */
+        list_append(self.components, (unitype) "XOR", 's');
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd'); // same x position as reference register
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i), 'd'); // y position of reference + compDist * number of references
+        list_append(self.positions, (unitype) 0, 'd'); // facing upwards
+        list_append(self.io, (unitype) 0, 'i');
+        list_append(self.io, (unitype) 0, 'i');
+        list_append(self.io, (unitype) 0, 'i');
+        list_append(self.inpComp, self.compSlots -> data[list_find(self.compSlots, (unitype) "XOR", 's') + 1], 'i');
+        list_append(self.inpComp, self.registers -> data[reference1 + 3].r -> data[i], 'i');
+        if (i == 0)
+            list_append(self.inpComp, (unitype) 0, 'i');
+        else
+            list_append(self.inpComp, (unitype) (unitype) (int) (self.components -> length - 2), 'i'); // add input from previous CARRY
+
+        /* add wiring from reference register, in this case it's a 1 to 1 bit to bit */
+        list_append(self.wiring, self.registers -> data[reference1 + 3].r -> data[i], 'i');
+        list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+        list_append(self.wiring, (unitype) 0, 'i');
+
+        if (i == 0) {
+            savedComp = self.components -> length - 1; // save this for the incrementor POWER to connect to
+        } else { // wire from previous carry
+            list_append(self.wiring, (unitype) (int) (self.components -> length - 2), 'i');
+            list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+            list_append(self.wiring, (unitype) 0, 'i');
+        }
+
+
+        list_append(self.components, (unitype) "NOT", 's');
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i - self.compDistX / 4), 'd'); // same x position as reference register
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY * 1.7), 'd'); // y position of reference + compDist * number of references
+        list_append(self.positions, (unitype) 0, 'd'); // facing upwards
+        list_append(self.io, (unitype) 0, 'i');
+        list_append(self.io, (unitype) 0, 'i');
+        list_append(self.io, (unitype) 0, 'i');
+        list_append(self.inpComp, self.compSlots -> data[list_find(self.compSlots, (unitype) "NOT", 's') + 1], 'i');
+        list_append(self.inpComp, (unitype) (int) (self.components -> length - 2), 'i');
+        list_append(self.inpComp, (unitype) 0, 'i');
+
+        /* add wiring from XORs, in this case it's a 1 to 1 bit to bit */
+        list_append(self.wiring, (unitype) (int) (self.components -> length - 2), 'i');
+        list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+        list_append(self.wiring, (unitype) 0, 'i');
+
+        list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) (self.components -> length - 1), 'i'); // these NOT gates are the output
+        /* NOT and AND gates (n - 1) */
+        if (i != size1 - 1) {
+            list_append(self.components, (unitype) "NOT", 's');
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i - self.compDistX / 4), 'd'); // same x position as reference register
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY / 2), 'd'); // y position of reference + compDist * number of references
+            list_append(self.positions, (unitype) 0, 'd'); // facing upwards
+            list_append(self.io, (unitype) 0, 'i');
+            list_append(self.io, (unitype) 0, 'i');
+            list_append(self.io, (unitype) 0, 'i');
+            list_append(self.inpComp, self.compSlots -> data[list_find(self.compSlots, (unitype) "NOT", 's') + 1], 'i');
+            list_append(self.inpComp, self.registers -> data[reference1 + 3].r -> data[i], 'i');
+            list_append(self.inpComp, (unitype) 0, 'i');
+
+            /* add wiring from reference register, in this case it's a 1 to 1 bit to bit */
+            list_append(self.wiring, self.registers -> data[reference1 + 3].r -> data[i], 'i');
+            list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+            list_append(self.wiring, (unitype) 0, 'i');
+
+
+
+            list_append(self.components, (unitype) "AND", 's');
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd'); // same x position as reference register
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY), 'd'); // y position of reference + compDist * number of references
+            list_append(self.positions, (unitype) 0, 'd'); // facing upwards
+            list_append(self.io, (unitype) 0, 'i');
+            list_append(self.io, (unitype) 0, 'i');
+            list_append(self.io, (unitype) 0, 'i');
+            list_append(self.inpComp, self.compSlots -> data[list_find(self.compSlots, (unitype) "AND", 's') + 1], 'i');
+            list_append(self.inpComp, (unitype) (int) (self.components -> length - 2), 'i');
+            if (i == 0)
+                list_append(self.inpComp, (unitype) 0, 'i');
+            else
+                list_append(self.inpComp, (unitype) (int) (self.components -> length - 5), 'i'); // add input from previous CARRY
+
+            /* add wiring from reference register, in this case it's a 1 to 1 bit to bit */
+            list_append(self.wiring, (unitype) (int) (self.components -> length - 2), 'i');
+            list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+            list_append(self.wiring, (unitype) 0, 'i');
+
+            if (i != 0) { // wire from previous carry
+                list_append(self.wiring, (unitype) (int) (self.components -> length - 5), 'i');
+                list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
+                list_append(self.wiring, (unitype) 0, 'i');
+            }
+        }
+    }
+
+    /* add POWER incrementor (turned on) */
+    list_append(self.components, (unitype) "POWER", 's');
+    list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * 0 + self.compDistX), 'd'); // same x position as reference register
+    list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * (self.registers -> data[reference1 + 2].i - 1)), 'd'); // y position of reference + compDist * number of references
+    list_append(self.positions, (unitype) 0, 'd'); // facing upwards
+    list_append(self.io, (unitype) 0, 'i');
+    list_append(self.io, (unitype) 1, 'i');
+    list_append(self.io, (unitype) 0, 'i');
+    list_append(self.inpComp, self.compSlots -> data[list_find(self.compSlots, (unitype) "POWER", 's') + 1], 'i');
+    list_append(self.inpComp, (unitype) savedComp, 'i'); // connect to the initial XOR and AND
+    list_append(self.inpComp, (unitype) (savedComp + 1), 'i');
+
+    list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i'); // wire to the initial XOR and AND
+    list_append(self.wiring, (unitype) savedComp, 'i');
+    list_append(self.wiring, (unitype) 0, 'i');
+
+    list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i'); // wire to the initial XOR and AND
+    list_append(self.wiring, (unitype) (savedComp + 3), 'i');
+    list_append(self.wiring, (unitype) 0, 'i');
+
+    self.inpComp -> data[savedComp * 3] = (unitype) (int) (self.components -> length - 1); // sets the second input for inpComp on the XOR and AND gates that this routes to
+    self.inpComp -> data[(savedComp + 3) * 3] = (unitype) (int) (self.components -> length - 1); // sets the second input for inpComp on the XOR and AND gates that this routes to
+    self.registers -> data[reference1 + 2].i += 2;
     break;
 
 
@@ -1220,6 +1349,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
 
 
     case 21: ; // addition, created by chaining full adders
+    
     break;
 
 
