@@ -1365,7 +1365,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     for (int i = 0; i < smallerSize; i++) {
         /* XOR and AND gates */
         list_append(self.components, (unitype) "XOR", 's');
-        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd'); // same x position as reference register
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd');
         list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i), 'd'); // y position of reference + compDist * number of references
         list_append(self.positions, (unitype) 0, 'd'); // facing upwards
         list_append(self.io, (unitype) 0, 'i');
@@ -1388,8 +1388,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
             list_append(self.registers -> data[self.registers -> length - 1].r, (unitype) (int) (self.components -> length - 1), 'i'); // this XOR gate are the output when i = 0
 
         list_append(self.components, (unitype) "AND", 's');
-        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd'); // same x position as reference register
-        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY), 'd'); // y position of reference + compDist * number of references
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i - self.compDistX / 4), 'd');
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY / 2), 'd'); // y position of reference + compDist * number of references
         list_append(self.positions, (unitype) 0, 'd'); // facing upwards
         list_append(self.io, (unitype) 0, 'i');
         list_append(self.io, (unitype) 0, 'i');
@@ -1412,8 +1412,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
         if (i != 0) {
             /* second AND */
             list_append(self.components, (unitype) "AND", 's');
-            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd'); // same x position as reference register
-            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY), 'd'); // y position of reference + compDist * number of references
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd');
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY * 1.65), 'd'); // y position of reference + compDist * number of references
             list_append(self.positions, (unitype) 0, 'd'); // facing upwards
             list_append(self.io, (unitype) 0, 'i');
             list_append(self.io, (unitype) 0, 'i');
@@ -1433,8 +1433,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
 
             /* second XOR */
             list_append(self.components, (unitype) "XOR", 's');
-            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd'); // same x position as reference register
-            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY), 'd'); // y position of reference + compDist * number of references
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i - self.compDistX / 4), 'd'); // same x position as reference register
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY * 1.15), 'd'); // y position of reference + compDist * number of references
             list_append(self.positions, (unitype) 0, 'd'); // facing upwards
             list_append(self.io, (unitype) 0, 'i');
             list_append(self.io, (unitype) 0, 'i');
@@ -1457,8 +1457,8 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
 
             /* OR */
             list_append(self.components, (unitype) "OR", 's');
-            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd'); // same x position as reference register
-            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY), 'd'); // y position of reference + compDist * number of references
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd');
+            list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY * 2.2), 'd'); // y position of reference + compDist * number of references
             list_append(self.positions, (unitype) 0, 'd'); // facing upwards
             list_append(self.io, (unitype) 0, 'i');
             list_append(self.io, (unitype) 0, 'i');
@@ -1482,7 +1482,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     for (int i = smallerSize; i < biggerSize; i++) {
         /* the XOR */
         list_append(self.components, (unitype) "XOR", 's');
-        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd'); // same x position as reference register
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd');
         list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY), 'd'); // y position of reference + compDist * number of references
         list_append(self.positions, (unitype) 0, 'd'); // facing upwards
         list_append(self.io, (unitype) 0, 'i');
@@ -1505,7 +1505,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
 
         /* the AND */
         list_append(self.components, (unitype) "AND", 's');
-        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd'); // same x position as reference register
+        list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 2].d - self.compDistX * i + self.compDistX / 4), 'd');
         list_append(self.positions, (unitype) (self.positions -> data[self.registers -> data[reference1 + 3].r -> data[0].i * 3 - 1].d + self.compDistY * self.registers -> data[reference1 + 2].i + self.compDistY), 'd'); // y position of reference + compDist * number of references
         list_append(self.positions, (unitype) 0, 'd'); // facing upwards
         list_append(self.io, (unitype) 0, 'i');
@@ -1524,7 +1524,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
         list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
         list_append(self.wiring, (unitype) 0, 'i');
     }
-    self.registers -> data[reference1 + 2].i += 2;
+    self.registers -> data[reference1 + 2].i += 3.2;
     break;
 
 
