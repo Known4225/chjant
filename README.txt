@@ -19,6 +19,7 @@ Addition & Subtraction
 ToAdd:
 Comparison (==, >, <)
 Multiplication
+If statements (multiplexer ?)
 Shifts left and right (fairly difficult without a clock)
 Division and Modulo (could be impossible)
 Loops (?) - may be impossible, I guess I could incorporate a clock, but then I'd need memory and at that point I might as well just build a computer
