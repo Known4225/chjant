@@ -14,11 +14,10 @@ Parentheses parsing
 Assigning new variables and redefining old ones
 Logical operators
 Increments and Decrements
-Addition
+Addition & Subtraction
 
 ToAdd:
 Shifts left and right (fairly difficult without a clock)
-Subtraction
 Multiplication
 Division and Modulo
 Funky assignment operations (C has some strange rules with assignment-in-expressions that I need to implement)
