@@ -15,6 +15,11 @@ keyboard and mouse presses
 #include "glfw3.h"
 #include "list.h"
 
+void extern glBegin(int);
+void extern glEnd();
+void extern glVertex2d(double, double);
+void extern glColor4d(double, double, double, double);
+
 typedef struct {
     GLFWwindow* window; // the window
     char close;

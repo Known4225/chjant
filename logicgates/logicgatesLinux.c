@@ -1013,10 +1013,10 @@ void compareAng(logicgates *selfp, int index1, int index2, int comp1, int comp2,
     if (self.wireType == 0) {
         double sinRot = sin(rot / 57.2958);
         double cosRot = cos(rot / 57.2958);
-        double morphX1 = ((x3 - x1) * cosRot) - ((y3 - y1) * sinRot);
-        double morphY1 = ((x3 - x1) * sinRot) - ((y3 - y1) * cosRot);
-        double morphX2 = ((x3 - x2) * cosRot) - ((y3 - y2) * sinRot);
-        double morphY2 = ((x3 - x2) * sinRot) - ((y3 - y2) * cosRot);
+        // double morphX1 = ((x3 - x1) * cosRot) - ((y3 - y1) * sinRot);
+        // double morphY1 = ((x3 - x1) * sinRot) - ((y3 - y1) * cosRot);
+        // double morphX2 = ((x3 - x2) * cosRot) - ((y3 - y2) * sinRot);
+        // double morphY2 = ((x3 - x2) * sinRot) - ((y3 - y2) * cosRot);
         // printf("x1: %.2lf x2: %.2lf x3: %.2lf\n", x1, x2, x3);
         char comp1Quad = 1;
         double comp1Ang = atan((x3 - x1) / (y3 - y1)) - rot / 57.2958;
@@ -2125,7 +2125,7 @@ int main(int argc, char *argv[]) {
             BUFFER(&self, self.mx, self.my, self.globalsize, self.holdingAng);
         // rotation using sideways arrows
         if (turtleKeyPressed(GLFW_KEY_RIGHT)) {
-            if (!self.holding == 0 && !self.holding == 1) {
+            if (!(strcmp(self.holding, "a") == 0) && !(strcmp(self.holding, "b") == 0)) {
                 self.holdingAng += 0.5 * self.rotateSpeed;
             } else {
                 if (self.selecting > 1) {
@@ -2142,7 +2142,7 @@ int main(int argc, char *argv[]) {
                         }
                     }
                 } else {
-                    if (!self.hlgcomp == 0) {
+                    if (self.hlgcomp != 0) {
                         self.positions -> data[self.hlgcomp * 3] = (unitype) (self.positions -> data[self.hlgcomp * 3].d + 0.5 * self.rotateSpeed);
                         if (self.positions -> data[self.hlgcomp * 3].d > 360)
                             self.positions -> data[self.hlgcomp * 3] = (unitype) (self.positions -> data[self.hlgcomp * 3].d - 360);
@@ -2151,7 +2151,7 @@ int main(int argc, char *argv[]) {
             }
         }
         if (turtleKeyPressed(GLFW_KEY_LEFT)) {
-            if (!self.holding == 0 && !self.holding == 1) {
+            if (!(strcmp(self.holding, "a") == 0) && !(strcmp(self.holding, "b") == 0)) {
                 self.holdingAng -= 0.5 * self.rotateSpeed;
             } else {
                 if (self.selecting > 1) {
@@ -2168,7 +2168,7 @@ int main(int argc, char *argv[]) {
                         }
                     }
                 } else {
-                    if (!self.hlgcomp == 0) {
+                    if (self.hlgcomp != 0) {
                         self.positions -> data[self.hlgcomp * 3] = (unitype) (self.positions -> data[self.hlgcomp * 3].d - 0.5 * self.rotateSpeed);
                         if (self.positions -> data[self.hlgcomp * 3].d < 0)
                             self.positions -> data[self.hlgcomp * 3] = (unitype) (self.positions -> data[self.hlgcomp * 3].d + 360);
