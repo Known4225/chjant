@@ -394,7 +394,7 @@ int checkConstant(seagate *selfp, char *input) { // returns the best guess at a 
     return 0;
 }
 
-void recordRegFromNamespace(seagate *selfp, int currentType, int varOrFunc) { // creates a register from the last added namespace
+void recordRegFromNamespace(seagate *selfp, int currentType, int varOrFunc, int sideOrDown) { // creates a register from the last added namespace
     seagate self = *selfp;
     list_append(self.userNamespace, (unitype) strdup(self.strData -> data[self.strPtr].s), 's'); // for lookups
     list_append(self.namespace, (unitype) strdup(self.strData -> data[self.strPtr].s), 's'); // input1
@@ -1106,7 +1106,7 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
     self.typeSize = 0;
     int currentType = checkType(&self);
     printf("record\n");
-    recordRegFromNamespace(&self, currentType, 1);
+    recordRegFromNamespace(&self, currentType, 1, 1);
     printf("recorded\n");
     char synDiv = checkSyntax(&self, self.strPtr, 1);
     currentType = checkType(&self);
@@ -1115,7 +1115,7 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
         printf("Error: file must start with \"{type} seagate({type} {string1})\"\n");
         return -1;
     }
-    recordRegFromNamespace(&self, currentType, 0);
+    recordRegFromNamespace(&self, currentType, 0, 1);
 
     while (checkSyntax(&self, self.strPtr, 1) == ',' && checkSyntax(&self, self.strPtr, 2) == 0) { // function has extra parameters
         currentType = checkType(&self);
@@ -1123,7 +1123,7 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
             printf("invalid syntax at word %d\n", self.strPtr);
             return -1;
         }
-        recordRegFromNamespace(&self, currentType, 0);
+        recordRegFromNamespace(&self, currentType, 0, 1);
     }
     if (checkSyntax(&self, self.strPtr, 1) != ')' || checkSyntax(&self, self.strPtr, 2) != '{' || checkSyntax(&self, self.strPtr, 3) != 0) { // function definition end
         printf("invalid syntax at word %d\n", self.strPtr);
@@ -1187,7 +1187,7 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
         printf("checking %s at word %d\n", self.strData -> data[self.strPtr].s, self.strPtr);
         currentType = checkType(&self);
         if (currentType != 0) { // new register
-            recordRegFromNamespace(&self, currentType, 0);
+            recordRegFromNamespace(&self, currentType, 0, 0);
             printf("syntaxic: ");
             list_print(self.syntaxic);
             int updateReg = self.registers -> length - 4; // this register represents the new variable we've just created
@@ -1223,7 +1223,7 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
                 char *redefine = malloc(strlen(self.strData -> data[self.strPtr].s) + 4);
                 memcpy(redefine, self.strData -> data[self.strPtr].s, strlen(self.strData -> data[self.strPtr].s));
                 memcpy(redefine + strlen(self.strData -> data[self.strPtr].s), "REF", 4);
-                recordRegFromNamespace(&self, currentType, 0);
+                recordRegFromNamespace(&self, currentType, 0, 0);
                 printf("syntaxic: ");
                 list_print(self.syntaxic);
                 int updateReg = self.registers -> length - 4; // this register represents the new variable we've just created

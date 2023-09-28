@@ -1540,7 +1540,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
     self.opResult = newName;
     list_append(self.registers, (unitype) newName, 's');
     list_append(self.registers, (unitype) smallerSize, 'i');
-    list_append(self.registers, (unitype) 2, 'i'); // needs some starting upward momentum
+    list_append(self.registers, (unitype) 3, 'i'); // needs some starting upward momentum
     list_append(self.registers, (unitype) list_init(), 'r'); // list of handles for registers
     list_append(self.deleteStack, (unitype) strdup(newName), 's');
     list_append(self.deleteStack, (unitype) (int) (self.registers -> length - 4), 'i'); // adds to the stack which is deleted after the expression is parsed
@@ -1765,7 +1765,7 @@ void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operati
         list_append(self.wiring, (unitype) (int) (self.components -> length - 1), 'i');
         list_append(self.wiring, (unitype) 0, 'i');
     }
-    self.registers -> data[reference1 + 2].i += 3.2;
+    self.registers -> data[reference1 + 2].i += 4.2;
     break;
 
 
