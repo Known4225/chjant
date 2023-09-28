@@ -697,7 +697,7 @@ int packageExpression(seagate *selfp) { // the parsing
                     list_delete(self.subsect -> data[step].r, 0);
                     list_delete(self.subsect -> data[step].r, 0);
                 } else {
-                    list_delete(self.subsect -> data[step].r, 1); // just subtract
+                    list_delete(self.subsect -> data[step].r, 0); // just subtract
                 }
             }
             if (self.subsect -> data[step].r -> length == 2 && self.subsect -> data[step].r -> data[0].c == '-' && self.subsect -> data[step].r -> data[1].c == '+') {
@@ -708,7 +708,7 @@ int packageExpression(seagate *selfp) { // the parsing
                     list_delete(self.subsect -> data[step].r, 0);
                     list_delete(self.subsect -> data[step].r, 0);
                 } else {
-                    list_delete(self.subsect -> data[step].r, 0); // just subtract
+                    list_delete(self.subsect -> data[step].r, 1); // just subtract
                 }
             }
             if (self.subsect -> data[step].r -> length == 1 && self.subsect -> data[step].r -> data[0].c == '-') {
