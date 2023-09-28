@@ -972,6 +972,7 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
     self.syntaxic = list_init(); // position (int) followed by syntax character
     self.keywords = list_init();
     self.registers = list_init();
+    self.allocatedArena = list_init();
     self.namespace = list_init(); // name (string), followed by type indicator (integer), followed by 0 - variable, 1 - function
     self.userNamespace = list_init();
     loadKeywords(&self);
@@ -1306,6 +1307,7 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
     list_free(self.syntaxic);
     list_free(self.keywords);
     list_free(self.registers);
+    list_free(self.allocatedArena);
     list_free(self.namespace);
     list_free(self.components);
     list_free(self.compSlots);

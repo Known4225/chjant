@@ -24,6 +24,11 @@ Shifts left and right (fairly difficult without a clock)
 Division and Modulo (could be impossible)
 Loops (?) - may be impossible, I guess I could incorporate a clock, but then I'd need memory and at that point I might as well just build a computer
 
+I also want to make it more obvious what the inputs and output even is when you load it into the logicgates program. Ideas include:
+Reformatting how components and modules are placed (very difficult because of bad design decisions)
+Adding a text section to the logicgates program, which draws text on the screen at specific spots so I can label things (destroys compatibility with older logicgates versions)
+
+
 
 To be honest, it's a miracle that this thing barely works in its current state
 I never made a C parser or compiler before, and that should be fairly obvious with one glance of the code
