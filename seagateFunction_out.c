@@ -1,1 +1,1 @@
-unsigned char seagate(unsigned char input1,unsigned char input2){return(input1+input1)-(input2+input2);}
+unsigned char seagate(unsigned char input1,unsigned char input2){return(input2+input2+input2)-(input1+input1);}
