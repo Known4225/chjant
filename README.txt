@@ -17,10 +17,10 @@ Increments and Decrements
 Addition & Subtraction
 
 ToAdd:
-Shifts left and right (fairly difficult without a clock)
+Comparison (==, >, <)
 Multiplication
-Division and Modulo
-Funky assignment operations (C has some strange rules with assignment-in-expressions that I need to implement)
+Shifts left and right (fairly difficult without a clock)
+Division and Modulo (could be impossible)
 Loops (?) - may be impossible, I guess I could incorporate a clock, but then I'd need memory and at that point I might as well just build a computer
 
 
