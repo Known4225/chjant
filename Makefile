@@ -1,6 +1,6 @@
 all:
-	gcc seagate.c recordPaddedReg.c include/list.c -o seagate.o
+	gcc chjant.c recordPaddedReg.c include/list.c -o chjant.o
 val:
-	gcc seagate.c recordPaddedReg.c include/list.c -g -Wall -o seagate.o
+	gcc chjant.c recordPaddedReg.c include/list.c -g -Wall -o chjant.o
 clean:
-	rm seagate.o
+	rm chjant.o
