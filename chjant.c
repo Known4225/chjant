@@ -1,4 +1,4 @@
-#include "seagateType.h"
+#include "chjantType.h"
 /* NOTE:
 remember to always strdup() when adding strings to lists, if you just add the same pointer then
 a list can free the string that is also inside another list, so make sure you always strdup so
@@ -22,8 +22,8 @@ static inline char spaceDeprivedChar(char t) {
     return 0;
 }
 
-void loadKeywords(seagate *selfp) { // most of these are not useful for this particular application, but I may as well include them all
-    seagate self = *selfp;
+void loadKeywords(chjant *selfp) { // most of these are not useful for this particular application, but I may as well include them all
+    chjant self = *selfp;
     printf("unitype size: %li\n", sizeof(unitype));
     list_append(self.keywords, (unitype) "auto", 's');
     list_append(self.keywords, (unitype) "break", 's');
@@ -178,8 +178,8 @@ void loadKeywords(seagate *selfp) { // most of these are not useful for this par
     *selfp = self;
 }
 
-void exportGates(seagate *selfp, const char *filename) { // exports a logicgates file
-    seagate self = *selfp;
+void exportGates(chjant *selfp, const char *filename) { // exports a logicgates file
+    chjant self = *selfp;
     FILE *file = fopen(filename, "w+");
         for (int i = 1; i < self.components -> length; i++)
             fprintf(file, "%s ", self.components -> data[i].s);
@@ -196,8 +196,8 @@ void exportGates(seagate *selfp, const char *filename) { // exports a logicgates
     *selfp = self;
 }
 
-void readString(seagate *selfp) { // parses pstr into strData and syntaxHighlight
-    seagate self = *selfp;
+void readString(chjant *selfp) { // parses pstr into strData and syntaxHighlight
+    chjant self = *selfp;
     list_t *tempStr = list_init();
     self.charPtr = 0;
     while (self.charPtr < self.pstr -> length) {
@@ -218,8 +218,8 @@ void readString(seagate *selfp) { // parses pstr into strData and syntaxHighligh
     *selfp = self;
 }
 
-char checkSyntax(seagate *selfp, int position, int column) { // returns the syntaxic divider between position - 1 and position in the code. Sometimes there are multiple dividers, column asks for the 1st, 2nd, 3rd, etc
-    seagate self = *selfp;
+char checkSyntax(chjant *selfp, int position, int column) { // returns the syntaxic divider between position - 1 and position in the code. Sometimes there are multiple dividers, column asks for the 1st, 2nd, 3rd, etc
+    chjant self = *selfp;
     char keep = 0;
     for (int i = 0; i < self.syntaxic -> length; i += 2) {
         if (self.syntaxic -> data[i].i == position) {
@@ -233,8 +233,8 @@ char checkSyntax(seagate *selfp, int position, int column) { // returns the synt
     return '\0';
 }
 
-int setSyntax(seagate *selfp, int position, int column, char toSet) { // haha, getters and setters in C
-    seagate self = *selfp;
+int setSyntax(chjant *selfp, int position, int column, char toSet) { // haha, getters and setters in C
+    chjant self = *selfp;
     char keep = 0;
     for (int i = 0; i < self.syntaxic -> length; i += 2) {
         if (self.syntaxic -> data[i].i == position) {
@@ -251,8 +251,8 @@ int setSyntax(seagate *selfp, int position, int column, char toSet) { // haha, g
     return -1;
 }
 
-int checkType(seagate *selfp) { // returns the type specified at strPtr (in the form described in the type indicators section). Returns 0 if there is no type
-    seagate self = *selfp;
+int checkType(chjant *selfp) { // returns the type specified at strPtr (in the form described in the type indicators section). Returns 0 if there is no type
+    chjant self = *selfp;
     self.typeSize = 0;
     int out = 0x80000000;
     while (strcmp(self.strData -> data[self.strPtr].s, "register") == 0 || 
@@ -338,8 +338,8 @@ int checkType(seagate *selfp) { // returns the type specified at strPtr (in the 
     return out;
 }
 
-int associatedOperation(seagate *selfp, list_t *check, int app) { // lookup for operations, set app to 1 to get the precendence, set app to 2 to get the operation code
-    seagate self = *selfp;
+int associatedOperation(chjant *selfp, list_t *check, int app) { // lookup for operations, set app to 1 to get the precendence, set app to 2 to get the operation code
+    chjant self = *selfp;
     int out = 0;
     char *tstr = list_toString(check);
     for (int i = 0; i < self.operatorPrecedence -> length; i += 3) {
@@ -351,8 +351,8 @@ int associatedOperation(seagate *selfp, list_t *check, int app) { // lookup for 
     return out;
 }
 
-int checkNamespace(seagate *selfp, char *findName) { // returns the register reference of the given namespace (pattern match namespace)
-    seagate self = *selfp;
+int checkNamespace(chjant *selfp, char *findName) { // returns the register reference of the given namespace (pattern match namespace)
+    chjant self = *selfp;
     for (int i = 0; i < self.registers -> length; i += 4) {
         if (strcmp(self.registers -> data[i].s, findName) == 0) {
             return i;
@@ -362,8 +362,8 @@ int checkNamespace(seagate *selfp, char *findName) { // returns the register ref
     *selfp = self;
 }
 
-int checkConstant(seagate *selfp, char *input) { // returns the best guess at a constant from a string (pattern match constants)
-    seagate self = *selfp;
+int checkConstant(chjant *selfp, char *input) { // returns the best guess at a constant from a string (pattern match constants)
+    chjant self = *selfp;
     self.constantType = 0;
     self.constant = (unitype) 0;
     char containsDot = 0;
@@ -394,8 +394,8 @@ int checkConstant(seagate *selfp, char *input) { // returns the best guess at a 
     return 0;
 }
 
-void recordRegFromNamespace(seagate *selfp, int currentType, int varOrFunc, int sideOrDown) { // creates a register from the last added namespace
-    seagate self = *selfp;
+void recordRegFromNamespace(chjant *selfp, int currentType, int varOrFunc, int sideOrDown) { // creates a register from the last added namespace
+    chjant self = *selfp;
     list_append(self.userNamespace, (unitype) strdup(self.strData -> data[self.strPtr].s), 's'); // for lookups
     list_append(self.namespace, (unitype) strdup(self.strData -> data[self.strPtr].s), 's'); // input1
     self.strPtr += 1; // skip input1
@@ -447,10 +447,10 @@ void recordRegFromNamespace(seagate *selfp, int currentType, int varOrFunc, int 
     *selfp = self;
 }
 
-extern void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operation); // prototype for this function which has its own file because life is suffering
+extern void recordPaddedReg(chjant *selfp, int reference1, int reference2, int operation); // prototype for this function which has its own file because life is suffering
 
-int packageExpression(seagate *selfp) { // the parsing
-    seagate self = *selfp;
+int packageExpression(chjant *selfp) { // the parsing
+    chjant self = *selfp;
     int index = self.strPtr; // for errors
     list_clear(self.quantities);
     char synt;
@@ -966,7 +966,7 @@ int packageExpression(seagate *selfp) { // the parsing
 }
 
 int main(int argc, char *argv[]) { // walks through the source code (line by line for the most part)
-    seagate self;
+    chjant self;
     self.pstr = list_init();
     self.strData = list_init();
     self.syntaxic = list_init(); // position (int) followed by syntax character
@@ -977,8 +977,8 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
     self.userNamespace = list_init();
     loadKeywords(&self);
     if (argc == 1) {
-        printf("using file \"seagateFunction.c\"\n");
-        self.filein = strdup("seagateFunction.c");
+        printf("using file \"chjantFunction.c\"\n");
+        self.filein = strdup("chjantFunction.c");
     } else {
         printf("using file \"%s\"\n", argv[1]);
         self.filein = strdup(argv[1]);
@@ -989,7 +989,7 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
         return -1;
     }
     /* parsing the file:
-    The file should begin with unsigned char seagate(unsigned char {string})
+    The file should begin with unsigned char chjant(unsigned char {string})
     We first want to eliminate extra whitespace */
     char string = 0;
     char lineComment = 0;
@@ -1087,7 +1087,7 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
     we can start doing manual lookups for keywords and creating namespaces 
     
     Issues:
-    strings can cause bad things to happen, the \ escape character is not implemented, and I don't care enough to do it since there should never be strings if you use seagate as intended
+    strings can cause bad things to happen, the \ escape character is not implemented, and I don't care enough to do it since there should never be strings if you use chjant as intended
     
     */
     readString(&self);
@@ -1112,8 +1112,8 @@ int main(int argc, char *argv[]) { // walks through the source code (line by lin
     char synDiv = checkSyntax(&self, self.strPtr, 1);
     currentType = checkType(&self);
     if (self.namespace -> data[1].i == 0 || currentType == 0 || synDiv != '(' || 
-    strcmp(self.namespace -> data[0].s, "seagate") != 0) {
-        printf("Error: file must start with \"{type} seagate({type} {string1})\"\n");
+    strcmp(self.namespace -> data[0].s, "chjant") != 0) {
+        printf("Error: file must start with \"{type} chjant({type} {string1})\"\n");
         return -1;
     }
     recordRegFromNamespace(&self, currentType, 0, 1);
