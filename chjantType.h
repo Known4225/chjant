@@ -1,9 +1,9 @@
-#ifndef SEAGATE_TYPE
-#define SEAGATE_TYPE
+#ifndef CHJANT_TYPE
+#define CHJANT_TYPE
 
 #include "include/list.h"
 
-/* seagate type */
+/* chjant type */
 typedef struct {
     char *filein; // filename
     char *fileout; // filename_out (prettier in C)
@@ -45,8 +45,8 @@ typedef struct {
     list_t *toDoStack;
     list_t *deleteStack;
     char *opResult;
-} seagate;
+} chjant;
 
-int checkNamespace(seagate *selfp, char *findName); // needed for seagate.c and recordPaddedReg.c, defined in seagate.c
+int checkNamespace(chjant *selfp, char *findName); // needed for chjant.c and recordPaddedReg.c, defined in chjant.c
 
 #endif
