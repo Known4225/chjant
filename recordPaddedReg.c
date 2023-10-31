@@ -1,15 +1,15 @@
-#include "seagateType.h"
+#include "chjantType.h"
 
 /* basically this function does all the actual creating of the gates */
-/* this one function is longer than the entire seagate.c file, which does all the file io and parsing */
+/* this one function is longer than the entire chjant.c file, which does all the file io and parsing */
 /* mostly due to a lot of duplicate, but still slightly different, code, which i dont really care about, let me do my over 1000+ line switch statement */
 
-void recordPaddedReg(seagate *selfp, int reference1, int reference2, int operation) { // creates a new register from one or two reference handle and an operation
+void recordPaddedReg(chjant *selfp, int reference1, int reference2, int operation) { // creates a new register from one or two reference handle and an operation
     if (reference1 == -1) {
         printf("This should never happen.\n");
         return;
     }
-    seagate self = *selfp;
+    chjant self = *selfp;
     char *ref1name = self.registers -> data[reference1].s;
     int size1 = self.registers -> data[reference1 + 1].i; // size is the same as reference1 size
     char *ref2name = self.registers -> data[reference2].s;
