@@ -1,11 +1,11 @@
-Seagate is a C compiler with limited capability.
-It will compile the seagateFunction.c file into a logic gates txt file that can be opened with my logic gates application (included in this project)
+Chjant is a C compiler with limited capability.
+It will compile the chjantFunction.c file into a logic gates txt file that can be opened with my logic gates application (included in this project)
 
-Write C code in the seagateFunction.c file and then run seagate.o.
+Write C code in the chjantFunction.c file and then run chjant.o.
 The code will generate a text file that can then be loaded into the logic gates simulator.
 
-You can use make to make the seagate program, or use
-gcc seagate.c recordPaddedReg.c include/list.c -o seagate.o
+You can use make to make the chjant program, or use
+gcc chjant.c recordPaddedReg.c include/list.c -o chjant.o
 because i decided to overcomplicate it this time and have it use multiple c files
 
 Current features include:
